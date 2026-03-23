@@ -1,27 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\rifowles\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net8.0\\WorkerExtensions\\WorkerExtensions.csproj": {}
+    "C:\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net8.0\\WorkerExtensions\\WorkerExtensions.csproj": {}
   },
   "projects": {
-    "C:\\Users\\rifowles\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net8.0\\WorkerExtensions\\WorkerExtensions.csproj": {
+    "C:\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net8.0\\WorkerExtensions\\WorkerExtensions.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\rifowles\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net8.0\\WorkerExtensions\\WorkerExtensions.csproj",
+        "projectUniqueName": "C:\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net8.0\\WorkerExtensions\\WorkerExtensions.csproj",
         "projectName": "Microsoft.Azure.Functions.Worker.Extensions",
-        "projectPath": "C:\\Users\\rifowles\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net8.0\\WorkerExtensions\\WorkerExtensions.csproj",
-        "packagesPath": "C:\\Users\\rifowles\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\rifowles\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net8.0\\WorkerExtensions\\obj\\",
+        "projectPath": "C:\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net8.0\\WorkerExtensions\\WorkerExtensions.csproj",
+        "packagesPath": "C:\\Users\\Richard\\.nuget\\packages\\",
+        "outputPath": "C:\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net8.0\\WorkerExtensions\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\rifowles\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\Richard\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net6.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -34,7 +32,13 @@
           "warnAsError": [
             "NU1605"
           ]
-        }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net6.0": {
@@ -64,15 +68,15 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[6.0.25, 6.0.25]"
+              "version": "[6.0.36, 6.0.36]"
             },
             {
               "name": "Microsoft.NETCore.App.Ref",
-              "version": "[6.0.25, 6.0.25]"
+              "version": "[6.0.36, 6.0.36]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[6.0.25, 6.0.25]"
+              "version": "[6.0.36, 6.0.36]"
             }
           ],
           "frameworkReferences": {
@@ -80,7 +84,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Users\\Richard\\dotnet10\\sdk\\10.0.100-rc.2.25502.107\\RuntimeIdentifierGraph.json"
         }
       }
     }

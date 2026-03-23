@@ -16,7 +16,10 @@
       },
       "Rag.Core/1.0.0": {
         "runtime": {
-          "Rag.Core.dll": {}
+          "Rag.Core.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
         }
       }
     }

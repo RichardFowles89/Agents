@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "xXo+tDictXRe/TkTy7mWe4MO6Fh82AVxFJJex3ObVzDBmnmMJGsXH62V6FDaHB7ZyNtfaEFcYFAiqC7sZf04Aw==",
+  "dgSpecHash": "TEJr2y+in80=",
   "success": true,
-  "projectFilePath": "C:\\Users\\rifowles\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj",
+  "projectFilePath": "C:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }
