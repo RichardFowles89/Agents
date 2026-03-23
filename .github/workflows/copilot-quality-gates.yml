@@ -1,0 +1,82 @@
+name: copilot-quality-gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dotnet-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET from global.json
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore 
+
+      - name: Format check
+        run: dotnet format AgentsApp.csproj --verify-no-changes
+
+      - name: Build check
+        run: dotnet build --no-restore --configuration Debug
+
+      - name: Test check (warn-only)
+        id: tests
+        continue-on-error: true
+        run: dotnet test --no-build --configuration Debug --logger "console;verbosity=minimal"
+
+      - name: Emit test warning
+        if: steps.tests.outcome == 'failure'
+        run: echo "::warning::Tests failed or did not run. Review output above."
+
+  security-architecture-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Security gate (critical patterns)
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+
+          echo "Checking for obvious hardcoded secrets..."
+          if grep -RInE '(ghp_[A-Za-z0-9_]+|Password=|User Id=.*;Password=)' src .github 2>/dev/null; then
+            echo "::error::Potential hardcoded secret/credential pattern found."
+            fail=1
+          fi
+
+          echo "Checking for SQL interpolation risks..."
+          if grep -RInE 'SELECT .*\{.*\}' src 2>/dev/null; then
+            echo "::error::Potential SQL interpolation/injection pattern found."
+            fail=1
+          fi
+
+          echo "Checking for shell command interpolation risks..."
+          if grep -RInE 'cmd /c .*\{.*\}' src 2>/dev/null; then
+            echo "::error::Potential command injection pattern found."
+            fail=1
+          fi
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::Security gate failed."
+            exit 1
+          fi
+
+      - name: Architecture hints (non-blocking)
+        continue-on-error: true
+        shell: bash
+        run: |
+          echo "Heuristic architecture checks..."
+          grep -RIn "new BadStyle()" src 2>/dev/null && echo "::warning::Concrete construction found; consider interface/DI at composition root."

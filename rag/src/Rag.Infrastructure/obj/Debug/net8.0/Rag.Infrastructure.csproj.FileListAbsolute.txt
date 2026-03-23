@@ -1,0 +1,15 @@
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\bin\Debug\net8.0\Rag.Infrastructure.deps.json
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\bin\Debug\net8.0\Rag.Infrastructure.dll
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\bin\Debug\net8.0\Rag.Infrastructure.pdb
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\bin\Debug\net8.0\Rag.Core.dll
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\bin\Debug\net8.0\Rag.Core.pdb
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\obj\Debug\net8.0\Rag.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\obj\Debug\net8.0\Rag.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\obj\Debug\net8.0\Rag.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\obj\Debug\net8.0\Rag.Infrastructure.AssemblyInfo.cs
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\obj\Debug\net8.0\Rag.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\obj\Debug\net8.0\Rag.Infrastructure.dll
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\obj\Debug\net8.0\refint\Rag.Infrastructure.dll
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\obj\Debug\net8.0\Rag.Infrastructure.pdb
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\obj\Debug\net8.0\ref\Rag.Infrastructure.dll
+C:\Users\rifowles\repos\Agents\rag\src\Rag.Infrastructure\obj\Debug\net8.0\Rag.Infrastructure.csproj.CopyComplete

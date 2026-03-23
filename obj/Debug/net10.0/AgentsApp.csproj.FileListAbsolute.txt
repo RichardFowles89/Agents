@@ -1,0 +1,16 @@
+C:\Users\rifowles\repos\Agents\bin\Debug\net10.0\AgentsApp.exe
+C:\Users\rifowles\repos\Agents\bin\Debug\net10.0\AgentsApp.deps.json
+C:\Users\rifowles\repos\Agents\bin\Debug\net10.0\AgentsApp.runtimeconfig.json
+C:\Users\rifowles\repos\Agents\bin\Debug\net10.0\AgentsApp.dll
+C:\Users\rifowles\repos\Agents\bin\Debug\net10.0\AgentsApp.pdb
+C:\Users\rifowles\repos\Agents\bin\Debug\net10.0\AgentsApp.xml
+C:\Users\rifowles\repos\Agents\obj\Debug\net10.0\AgentsApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\rifowles\repos\Agents\obj\Debug\net10.0\AgentsApp.AssemblyInfoInputs.cache
+C:\Users\rifowles\repos\Agents\obj\Debug\net10.0\AgentsApp.AssemblyInfo.cs
+C:\Users\rifowles\repos\Agents\obj\Debug\net10.0\AgentsApp.csproj.CoreCompileInputs.cache
+C:\Users\rifowles\repos\Agents\obj\Debug\net10.0\AgentsApp.dll
+C:\Users\rifowles\repos\Agents\obj\Debug\net10.0\refint\AgentsApp.dll
+C:\Users\rifowles\repos\Agents\obj\Debug\net10.0\AgentsApp.xml
+C:\Users\rifowles\repos\Agents\obj\Debug\net10.0\AgentsApp.pdb
+C:\Users\rifowles\repos\Agents\obj\Debug\net10.0\AgentsApp.genruntimeconfig.cache
+C:\Users\rifowles\repos\Agents\obj\Debug\net10.0\ref\AgentsApp.dll

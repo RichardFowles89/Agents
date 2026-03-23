@@ -1,0 +1,39 @@
+{
+  "name": "pre-commit-style-check",
+  "description": "Deterministic pre-commit validation: format check, build verification, and optional tests.",
+  "trigger": "PreCommit",
+  "commands": [
+    {
+      "name": "format-check",
+      "description": "Verify code formatting matches project style without applying changes.",
+      "run": "dotnet format --verify-no-changes src/",
+      "onFailure": "block",
+      "message": "Code formatting violations detected. Run 'dotnet format src/' to fix, then re-stage and commit.",
+      "exitCodeSuccess": 0
+    },
+    {
+      "name": "build-check",
+      "description": "Verify all C# code compiles cleanly.",
+      "run": "dotnet build --no-restore --configuration Debug",
+      "onFailure": "block",
+      "message": "Build failed. Fix compilation errors and re-commit.",
+      "exitCodeSuccess": 0
+    },
+    {
+      "name": "test-check",
+      "description": "Run unit tests to ensure no regressions.",
+      "run": "dotnet test --no-build --configuration Debug --logger 'console;verbosity=minimal'",
+      "onFailure": "warn",
+      "message": "Tests failed or did not run. Review test output above.",
+      "exitCodeSuccess": 0,
+      "optional": true
+    }
+  ],
+  "notes": [
+    "These checks run deterministically and do not depend on model behavior.",
+    "Format check blocks commit if violations are found.",
+    "Build check blocks commit if compilation fails.",
+    "Test check warns but does not block (optional for learning project).",
+    "All paths are relative to workspace root."
+  ]
+}
