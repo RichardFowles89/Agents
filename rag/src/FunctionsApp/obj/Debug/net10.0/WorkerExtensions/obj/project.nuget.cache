@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "9i8dYHSw6fA=",
+  "dgSpecHash": "YObByo99/vo=",
   "success": true,
   "projectFilePath": "C:\\repos\\Agents\\rag\\src\\FunctionsApp\\obj\\Debug\\net10.0\\WorkerExtensions\\WorkerExtensions.csproj",
   "expectedPackageFiles": [
@@ -143,9 +143,9 @@
     "C:\\Users\\Richard\\.nuget\\packages\\system.xml.readerwriter\\4.3.0\\system.xml.readerwriter.4.3.0.nupkg.sha512",
     "C:\\Users\\Richard\\.nuget\\packages\\system.xml.xdocument\\4.3.0\\system.xml.xdocument.4.3.0.nupkg.sha512",
     "C:\\Users\\Richard\\.nuget\\packages\\windowsazure.storage\\9.3.1\\windowsazure.storage.9.3.1.nupkg.sha512",
-    "C:\\Users\\Richard\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.21\\microsoft.netcore.app.ref.8.0.21.nupkg.sha512",
-    "C:\\Users\\Richard\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.21\\microsoft.windowsdesktop.app.ref.8.0.21.nupkg.sha512",
-    "C:\\Users\\Richard\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.21\\microsoft.aspnetcore.app.ref.8.0.21.nupkg.sha512"
+    "C:\\Users\\Richard\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.25\\microsoft.netcore.app.ref.8.0.25.nupkg.sha512",
+    "C:\\Users\\Richard\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.25\\microsoft.windowsdesktop.app.ref.8.0.25.nupkg.sha512",
+    "C:\\Users\\Richard\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.25\\microsoft.aspnetcore.app.ref.8.0.25.nupkg.sha512"
   ],
   "logs": []
 }

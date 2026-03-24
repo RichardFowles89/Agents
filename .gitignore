@@ -1,0 +1,29 @@
+# Build outputs
+bin/
+obj/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# VS / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Azure Functions local config (contains secrets)
+local.settings.json
+
+# Environment / secrets
+.env
+*.env.local
+appsettings.Development.json
+appsettings.Local.json
+
+# OS
+.DS_Store
+Thumbs.db

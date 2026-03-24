@@ -8,6 +8,7 @@
     ".NETCoreApp,Version=v10.0": {
       "FunctionsApp/1.0.0": {
         "dependencies": {
+          "Azure.AI.OpenAI": "2.1.0",
           "Microsoft.Azure.Functions.Worker": "2.51.0",
           "Microsoft.Azure.Functions.Worker.Extensions.Http": "3.2.0",
           "Rag.Core": "1.0.0",
@@ -17,10 +18,22 @@
           "FunctionsApp.dll": {}
         }
       },
+      "Azure.AI.OpenAI/2.1.0": {
+        "dependencies": {
+          "Azure.Core": "1.44.1",
+          "OpenAI": "2.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Azure.AI.OpenAI.dll": {
+            "assemblyVersion": "2.1.0.0",
+            "fileVersion": "2.100.24.60605"
+          }
+        }
+      },
       "Azure.Core/1.44.1": {
         "dependencies": {
           "Microsoft.Bcl.AsyncInterfaces": "6.0.0",
-          "System.ClientModel": "1.1.0",
+          "System.ClientModel": "1.2.1",
           "System.Memory.Data": "6.0.0"
         },
         "runtime": {
@@ -521,14 +534,25 @@
           }
         }
       },
-      "System.ClientModel/1.1.0": {
+      "OpenAI/2.1.0": {
+        "dependencies": {
+          "System.ClientModel": "1.2.1"
+        },
+        "runtime": {
+          "lib/net6.0/OpenAI.dll": {
+            "assemblyVersion": "2.1.0.0",
+            "fileVersion": "2.1.0.0"
+          }
+        }
+      },
+      "System.ClientModel/1.2.1": {
         "dependencies": {
           "System.Memory.Data": "6.0.0"
         },
         "runtime": {
           "lib/net6.0/System.ClientModel.dll": {
-            "assemblyVersion": "1.1.0.0",
-            "fileVersion": "1.100.24.46703"
+            "assemblyVersion": "1.2.1.0",
+            "fileVersion": "1.200.124.50905"
           }
         }
       },
@@ -588,6 +612,13 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "Azure.AI.OpenAI/2.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-doixr3tcsIcdzbzF9NxKt+6U0NKj6aPeOCPYONPsWjyf3gxVndVJAdjPcVdqeR/3vcRHXRgGnGlv+iXx5jMA4g==",
+      "path": "azure.ai.openai/2.1.0",
+      "hashPath": "azure.ai.openai.2.1.0.nupkg.sha512"
     },
     "Azure.Core/1.44.1": {
       "type": "package",
@@ -869,12 +900,19 @@
       "path": "microsoft.extensions.primitives/10.0.0",
       "hashPath": "microsoft.extensions.primitives.10.0.0.nupkg.sha512"
     },
-    "System.ClientModel/1.1.0": {
+    "OpenAI/2.1.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-UocOlCkxLZrG2CKMAAImPcldJTxeesHnHGHwhJ0pNlZEvEXcWKuQvVOER2/NiOkJGRJk978SNdw3j6/7O9H1lg==",
-      "path": "system.clientmodel/1.1.0",
-      "hashPath": "system.clientmodel.1.1.0.nupkg.sha512"
+      "sha512": "sha512-zl72nyP4O94ZyEoCLoE8qoc5vp8kSJmRuqR+UdK+jNIjFJGWJYjsb4rAGpMWWRTbPYuk82E8myMJdVQurMLDnQ==",
+      "path": "openai/2.1.0",
+      "hashPath": "openai.2.1.0.nupkg.sha512"
+    },
+    "System.ClientModel/1.2.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-s9+M5El+DXdCRRLzxak8uGBKWT8H/eIssGpFtpaMKdJULrQbBDPH/zFbVyHX+NDczhS5EvjHFbBH9/L+0UhmcA==",
+      "path": "system.clientmodel/1.2.1",
+      "hashPath": "system.clientmodel.1.2.1.nupkg.sha512"
     },
     "System.Diagnostics.EventLog/10.0.0": {
       "type": "package",

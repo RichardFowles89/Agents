@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "vV0+NmOGl1M=",
+  "dgSpecHash": "M1ag7LCn3DU=",
   "success": true,
   "projectFilePath": "C:\\repos\\Agents\\rag\\src\\FunctionsApp\\FunctionsApp.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Richard\\.nuget\\packages\\azure.ai.openai\\2.1.0\\azure.ai.openai.2.1.0.nupkg.sha512",
     "C:\\Users\\Richard\\.nuget\\packages\\azure.core\\1.44.1\\azure.core.1.44.1.nupkg.sha512",
     "C:\\Users\\Richard\\.nuget\\packages\\google.protobuf\\3.28.0\\google.protobuf.3.28.0.nupkg.sha512",
     "C:\\Users\\Richard\\.nuget\\packages\\grpc.core.api\\2.65.0\\grpc.core.api.2.65.0.nupkg.sha512",
@@ -47,7 +48,8 @@
     "C:\\Users\\Richard\\.nuget\\packages\\microsoft.extensions.options\\10.0.0\\microsoft.extensions.options.10.0.0.nupkg.sha512",
     "C:\\Users\\Richard\\.nuget\\packages\\microsoft.extensions.options.configurationextensions\\10.0.0\\microsoft.extensions.options.configurationextensions.10.0.0.nupkg.sha512",
     "C:\\Users\\Richard\\.nuget\\packages\\microsoft.extensions.primitives\\10.0.0\\microsoft.extensions.primitives.10.0.0.nupkg.sha512",
-    "C:\\Users\\Richard\\.nuget\\packages\\system.clientmodel\\1.1.0\\system.clientmodel.1.1.0.nupkg.sha512",
+    "C:\\Users\\Richard\\.nuget\\packages\\openai\\2.1.0\\openai.2.1.0.nupkg.sha512",
+    "C:\\Users\\Richard\\.nuget\\packages\\system.clientmodel\\1.2.1\\system.clientmodel.1.2.1.nupkg.sha512",
     "C:\\Users\\Richard\\.nuget\\packages\\system.diagnostics.eventlog\\10.0.0\\system.diagnostics.eventlog.10.0.0.nupkg.sha512",
     "C:\\Users\\Richard\\.nuget\\packages\\system.memory.data\\6.0.0\\system.memory.data.6.0.0.nupkg.sha512"
   ],

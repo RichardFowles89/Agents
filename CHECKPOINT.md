@@ -2,17 +2,17 @@
 
 **Date:** March 23, 2026  
 **Status:** RAG core pipeline wired into Functions host, seed data ready, Codespace config complete  
-**Next Step:** Start Functions host and test POST /ask endpoint with Postman
+**Next Step:** Start Functions host and test POST /ask endpoint with Postman (real Azure OpenAI planner enabled)
 
 ---
 
 ## What We Built This Session
 
 ### Phase: Functions Host Integration
-We wired the orchestrated RAG pipeline (`RagPipeline`) into an Azure Functions isolated worker host with three stub agent implementations. The full HTTP → pipeline → retriever → planner → answer → safety → response chain is now ready.
+We wired the orchestrated RAG pipeline (`RagPipeline`) into an Azure Functions isolated worker host with a real Azure OpenAI planner and stub answer/safety agents. The full HTTP → pipeline → retriever → planner → answer → safety → response chain is now ready.
 
 **Files Created:**
-- `FunctionsApp/Agents/StubPlannerAgent.cs` — decides if retrieval hits exist (Answerable/Refuse)
+- `FunctionsApp/Agents/AzureOpenAIPlannerAgent.cs` — uses Azure OpenAI to decide if context is sufficient (Answerable/Refuse)
 - `FunctionsApp/Agents/StubAnswerAgent.cs` — builds answer from first hit + citations
 - `FunctionsApp/Agents/StubSafetyReviewerAgent.cs` — always approves (stub)
 - `FunctionsApp/Functions/AskFunction.cs` — POST /ask HTTP trigger, JSON in/out
@@ -21,7 +21,7 @@ We wired the orchestrated RAG pipeline (`RagPipeline`) into an Azure Functions i
 
 **Files Modified:**
 - `FunctionsApp/FunctionsApp.csproj` — added `Rag.Infrastructure` reference
-- `FunctionsApp/Program.cs` — DI registration: retriever + 3 stubs + pipeline
+- `FunctionsApp/Program.cs` — DI registration: retriever + Azure OpenAI planner + stub answer/safety + pipeline
 - `FunctionsApp/local.settings.json` — empty `AzureWebJobsStorage` (HTTP-only)
 - `rag/global.json` — added `rollForward: latestFeature` for SDK flexibility
 
@@ -30,7 +30,7 @@ We wired the orchestrated RAG pipeline (`RagPipeline`) into an Azure Functions i
 ✅ Keyword search retriever with in-memory seed data  
 ✅ All 5 unit tests passing  
 ✅ Full build succeeds (0 errors)  
-✅ DI wiring complete  
+✅ DI wiring complete (real Azure OpenAI planner + stub answer/safety)  
 ✅ `POST /ask` function signature ready  
 
 ### What Doesn't Work Yet
@@ -56,14 +56,16 @@ AskFunction deserializes → calls RagPipeline.AskAsync()
 
 **Pipeline Flow:**
 1. **Retriever** (`ISearchRetriever`) — finds docs (today: keyword scorer; later: Azure AI Search)
-2. **Planner** (`IPlannerAgent`) — decides if we have enough context (today: stub; later: GPT-4o)
+2. **Planner** (`IPlannerAgent`) — decides if we have enough context (today: Azure OpenAI)
 3. **Answer Agent** (`IAnswerAgent`) — generates answer from hits (today: stub; later: GPT-4o grounded)
 4. **Safety Reviewer** (`ISafetyReviewerAgent`) — checks for harm/hallucination (today: stub; later: Azure AI Content Safety)
 
-**Why stubs?**
+**Why partial stubs?**
 - Full chain works end-to-end without Azure dependencies
 - Each interface can be swapped 1:1 when ready for real Azure services
 - Tests pass with fake implementations, proving the pipeline logic is solid
+
+Current state: planner now uses real Azure OpenAI; answer and safety remain stubs.
 
 ---
 
@@ -128,8 +130,7 @@ You should get `"answered": false` with refusalReason explaining why.
 
 **Short Term (next 2–3 sessions):**
 1. ✅ **Get Functions host running** on VM/Codespace
-2. **Replace stubs with real Azure services:**
-   - `IPlannerAgent` → Azure OpenAI GPT-4o call
+2. **Replace remaining stubs with real Azure services:**
    - `IAnswerAgent` → Azure OpenAI grounded generation
    - `ISafetyReviewerAgent` → Azure AI Content Safety
 3. **Add `POST /ingest` endpoint** to seed the retriever from real documents
@@ -171,8 +172,7 @@ The planner and safety reviewer are as important as the answer generator. Most R
 - `rag/src/FunctionsApp/Agents/Stub*.cs` — stub implementations (replace these next)
 
 **Next Edits:**
-- `Program.cs` — DI registration lines (swap in real implementations)
-- `FunctionsApp/Agents/RealPlannerAgent.cs` (new) — Azure OpenAI planner
+- `Program.cs` — DI registration lines (swap in remaining real implementations)
 - `FunctionsApp/Agents/RealAnswerAgent.cs` (new) — Azure OpenAI answer generator
 - `FunctionsApp/Functions/IngestFunction.cs` (new) — POST /ingest endpoint
 
@@ -215,7 +215,8 @@ Open a `.cs` file → Copilot Chat → ask "@smart-reviewer analyze this file" o
 - [ ] Test POST /ask in Postman, confirm 200 with answer JSON
 - [ ] Test GET /health, confirm 200 OK
 - [ ] (If refusal path fails, debug planner: may be hitting empty retriever)
-- [ ] Once working, replace `StubPlannerAgent` with real GPT-4o call
+- [ ] Once working, replace `StubAnswerAgent` with real GPT-4o grounded answer call
+- [ ] Replace `StubSafetyReviewerAgent` with Azure AI Content Safety review
 - [ ] Document insights in session notes
 
 ---
