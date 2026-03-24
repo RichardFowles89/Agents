@@ -193,4 +193,25 @@ Expected: `answered: false` with `refusalReason`.
 
 ---
 
+## Session Handoff (End of Day — March 24, 2026)
+
+**Current State:**
+- Functions host is running and discoverable (`func start` from `rag/src/FunctionsApp`)
+- All 5 unit tests pass
+- Full pipeline operational: Ask → Ingest → Health routes all working
+- Safety reviewer integrated with real Azure OpenAI
+
+**To Resume Tomorrow:**
+1. Kill the background `func start` terminal if still running
+2. Run `cd c:\repos\Agents\rag\src\FunctionsApp && func start` to restart the host
+3. Begin with next steps from "Medium Term" section (Azure AI Search, embeddings, or evaluation harness)
+
+**Files in Good State:**
+- [CHECKPOINT.md](CHECKPOINT.md) — fully updated with session results
+- [Program.cs](rag/src/FunctionsApp/Program.cs) — DI complete
+- [IngestFunction.cs](rag/src/FunctionsApp/Functions/IngestFunction.cs) — tested and working
+- [AzureOpenAISafetyReviewerAgent.cs](rag/src/FunctionsApp/Agents/AzureOpenAISafetyReviewerAgent.cs) — tested and working
+- [KeywordSearchRetriever.cs](rag/src/Rag.Infrastructure/Retrieval/KeywordSearchRetriever.cs) — mutable and thread-safe
+- All tests passing
+
 This file is now the source of truth for session continuity. Update it continuously as work progresses.
