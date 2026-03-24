@@ -9,6 +9,7 @@ using OpenAI.Chat;
 using Rag.Core.Contracts;
 using Rag.Core.Models;
 using Rag.Core.Pipeline;
+using Rag.Infrastructure.Chunking;
 using Rag.Infrastructure.Retrieval;
 
 var host = new HostBuilder()
@@ -27,6 +28,7 @@ var host = new HostBuilder()
 
         IReadOnlyList<RetrievalHit> seedHits = SampleDocumentStore.GetSeededHits();
         services.AddSingleton<ISearchRetriever>(new KeywordSearchRetriever(seedHits));
+        services.AddSingleton<IDocumentChunker, DocumentChunker>();
         services.AddSingleton<IPlannerAgent, AzureOpenAIPlannerAgent>();
         services.AddSingleton<IAnswerAgent, AzureOpenAIAnswerAgent>();
         services.AddSingleton<ISafetyReviewerAgent, AzureOpenAISafetyReviewerAgent>();

@@ -52,5 +52,32 @@
         "direction": "Out"
       }
     ]
+  },
+  {
+    "name": "Ingest",
+    "scriptFile": "FunctionsApp.dll",
+    "entryPoint": "FunctionsApp.Functions.IngestFunction.RunAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Anonymous",
+        "methods": [
+          "post"
+        ],
+        "route": "ingest",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
   }
 ]

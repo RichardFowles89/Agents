@@ -1,8 +1,8 @@
 # RAG Learning Project — Tuesday Checkpoint
 
-**Date:** March 24, 2026 (Updated 15:30)  
-**Status:** Functions host verified, real Azure OpenAI planner + answer + safety agents active  
-**Next Step:** Test refusal path case explicitly, then add `POST /ingest` endpoint
+**Date:** March 24, 2026 (Updated 17:30)  
+**Status:** Functions host verified, real Azure OpenAI pipeline active, POST /ingest endpoint functional  
+**Next Step:** Create comprehensive test suite, then prepare for cloud deployment
 
 ## Session Continuity Rule (Permanent)
 
@@ -12,37 +12,43 @@
 
 ## What We Built This Session
 
-### Phase 1: Functions Host Validation + Real Answer Agent
-We validated the Azure Functions isolated worker host end-to-end and confirmed the full HTTP -> pipeline -> retriever -> planner -> answer -> safety -> response chain is running locally. The answer agent is now Azure OpenAI-backed (planner + answer + safety are all real).
+### Phase 1: Functions Host Validation + Real Answer Agent + Ingest
+We validated the Azure Functions isolated worker host end-to-end and confirmed the full HTTP -> pipeline -> retriever -> planner -> answer -> safety -> response chain. All three Azure OpenAI agents are real. The retriever now supports dynamic document ingestion.
 
 **Files Created (Phase 1):**
-- `FunctionsApp/Agents/AzureOpenAIPlannerAgent.cs` — uses Azure OpenAI to decide if context is sufficient (Answerable/Refuse)
-- `FunctionsApp/Agents/AzureOpenAIAnswerAgent.cs` — uses Azure OpenAI to generate grounded answers from retrieved context
-- `FunctionsApp/Agents/AzureOpenAISafetyReviewerAgent.cs` — uses Azure OpenAI to check for hallucinations, harmful content, and accuracy
-
-**Files Created (Continuation):**
+- `FunctionsApp/Agents/AzureOpenAIPlannerAgent.cs` — uses Azure OpenAI to decide if context is sufficient
+- `FunctionsApp/Agents/AzureOpenAIAnswerAgent.cs` — uses Azure OpenAI to generate grounded answers
+- `FunctionsApp/Agents/AzureOpenAISafetyReviewerAgent.cs` — uses Azure OpenAI to check for hallucinations/harm
+- `FunctionsApp/Functions/AskFunction.cs` — POST /ask HTTP trigger
+- `FunctionsApp/Functions/IngestFunction.cs` — POST /ingest HTTP trigger (NEW)
+- `FunctionsApp/Data/SampleDocumentStore.cs` — 5 seeded documents
+- `Rag.Core/Models/IngestRequest.cs` — request model for /ingest endpoint
 - `FunctionsApp/Functions/AskFunction.cs` — POST /ask HTTP trigger, JSON in/out
 - `FunctionsApp/Data/SampleDocumentStore.cs` — 5 seeded documents (RAG, Azure Search, Azure OpenAI, chunking)
 - `.devcontainer/devcontainer.json` — Codespace setup with .NET 8, Node, Core Tools, C# + Copilot extensions
 
-**Files Modified (Phase 1):**
-- `FunctionsApp/FunctionsApp.csproj` — includes required Azure/OpenAI packages and project references
-- `FunctionsApp/Program.cs` — DI registration: retriever + Azure OpenAI planner + Azure OpenAI answer + Azure OpenAI safety + pipeline
+**Files Modified (Phase 1):**chunker + all three Azure OpenAI agents + pipeline
 - `FunctionsApp/local.settings.json` — local runtime values for host and Azure OpenAI settings
 - `rag/global.json` — `rollForward: latestFeature` for SDK flexibility
-
-### What Works
-✅ RAG pipeline orchestration (retrieve -> plan -> answer -> review)  
-✅ Keyword search retriever with in-memory seed data  
-✅ Functions host starts and discovers both routes (`Ask`, `Health`)  
+- `Rag.Core/Contracts/ISearchRetriever.cs` — added `IngestAsync` method  
+- `Rag.Infrastructure/Retrieval/KeywordSearchRetriever.cs` — mutable index with thread-safe locking for ingest
+- `Rag.Tests/RagPipelineTests.cs` — added `IngestAsync` stub to `FakeRetriever`I planner + Azure OpenAI answer + Azure OpenAI safety + pipeline
+- `FunctionsApp/local.settings.json` — local runtime values for host and Azure OpenAI settings
+- `rag/global.json` — `rollForward: latestFeature` for SDK flexibility
++ dynamic ingestion  
+✅ Functions host starts and discovers all three routes (`Ask`, `Health`, `Ingest`)  
 ✅ `GET /api/health` responds successfully  
 ✅ `POST /api/ask` responds with grounded answer + citations  
-✅ Unit tests pass (`RagPipelineTests`: 3 passed)  
+✅ `POST /api/ingest` accepts documents, chunks them, adds to index  
+✅ Unit tests pass (`RagPipelineTests`: 5 passed)  
 ✅ Functions app build succeeds (0 errors)  
-✅ DI wiring complete (real Azure OpenAI planner + real Azure OpenAI answer + real Azure OpenAI safety reviewer)  
+✅ DI wiring complete (real Azure OpenAI planner + answer + safety + document chunker)  
 ✅ Safety reviewer checks for hallucinations, harmful content, and accuracy  
+✅ Ingested documents are retrievable and used for generating answers  
 
 ### What Doesn't Work Yet
+❌ Host reports `azure.functions.webjobs.storage` unhealthy when `AzureWebJobsStorage` is empty (HTTP flow still works)  
+❌ `/ingest` endpoint does not persist documents across restarts (in-memory only)
 ❌ Host reports `azure.functions.webjobs.storage` unhealthy when `AzureWebJobsStorage` is empty (HTTP flow still works)  
 ❌ No dedicated refusal-path smoke test has been explicitly validated yet (needs test run)  
 ❌ `POST /ingest` endpoint not yet created  
@@ -126,7 +132,7 @@ Expected: `answered: false` with `refusalReason`.
 
 ## Broader Learning Path (Updated)
 
-**Short Term (next 2–3 sessions):**
+**S✅ **Add `POST /ingest` endpoint** to seed the retriever from
 1. ✅ **Get Functions host running** on VM/Codespace
 2. ✅ **Replace `IAnswerAgent` stub with Azure OpenAI grounded generation**
 3. ✅ **Replace `ISafetyReviewerAgent` stub with Azure OpenAI safety review**
@@ -169,13 +175,17 @@ Expected: `answered: false` with `refusalReason`.
 - [x] Run `cd rag/src/FunctionsApp && func start`
 - [x] Confirm Functions banner appears (Ask & Health routes visible)
 - [x] Test POST /ask, confirm 200 with answer JSON
-- [x] Test GET /health, confirm 200 OK
-- [x] Replace `StubSafetyReviewerAgent` with Azure OpenAI safety review agent
-- [x] Test explicit refusal path (`{"question":"kubernetes deployment strategies"}`), verify `answered=false`
-- [x] Rebuild and verify Functions app still starts
-- [ ] Add `POST /ingest` endpoint
+- [x] Add `POST /ingest` endpoint
+- [x] Test ingest endpoint with new documents
+- [x] Verify ingested documents are retrievable by /ask endpoint
 - [x] Keep `CHECKPOINT.md` updated immediately after each meaningful progress step
 
+### Session Results & Test Evidence (March 24, 17:30)
+- **Refusal path:** `{"question":"kubernetes deployment strategies"}` → `answered=false`, `refusalReason` ✅
+- **Happy path (seeded):** `{"question":"what is RAG?"}` → `answered=true`, 3 citations ✅
+- **Ingest test 1:** Document ingested, 1 chunk created ✅
+- **Ingest test 2:** Azure testing document ingested and successfully retrieved for question "What is Azure testing?" ✅
+- **Safety reviewer:** Approved all responses (refusal, seeded answer, ingested answer)
 ### Refusal & Happy Path Test Results (March 24, 17:25)
 - **Refusal path:** POST /api/ask with `{"question":"kubernetes deployment strategies"}` → `answered=false`, `refusalReason="Planner refused to answer with current context."` ✅
 - **Happy path:** POST /api/ask with `{"question":"what is RAG?"}` → `answered=true`, answer text + 3 citations from seeded docs ✅

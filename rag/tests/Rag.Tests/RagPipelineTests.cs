@@ -80,6 +80,11 @@ public class RagPipelineTests
         {
             return Task.FromResult(_hits.Take(top).ToList() as IReadOnlyList<RetrievalHit>);
         }
+
+        public Task IngestAsync(IReadOnlyList<DocumentChunk> chunks, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakePlanner : IPlannerAgent
