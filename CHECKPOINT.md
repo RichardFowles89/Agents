@@ -1,81 +1,86 @@
-# RAG Learning Project — Monday Checkpoint
+# RAG Learning Project — Tuesday Checkpoint
 
-**Date:** March 23, 2026  
-**Status:** RAG core pipeline wired into Functions host, seed data ready, Codespace config complete  
-**Next Step:** Start Functions host and test POST /ask endpoint with Postman (real Azure OpenAI planner enabled)
+**Date:** March 24, 2026  
+**Status:** Functions host verified, real Azure OpenAI planner + answer agent active, safety still stubbed  
+**Next Step:** Replace `StubSafetyReviewerAgent` with Azure AI Content Safety and add refusal-path smoke test to routine checks
+
+## Session Continuity Rule (Permanent)
+
+`CHECKPOINT.md` must always be kept up to date at all times after each meaningful change or validation step, so progress is recoverable if the session breaks.
 
 ---
 
 ## What We Built This Session
 
-### Phase: Functions Host Integration
-We wired the orchestrated RAG pipeline (`RagPipeline`) into an Azure Functions isolated worker host with a real Azure OpenAI planner and stub answer/safety agents. The full HTTP → pipeline → retriever → planner → answer → safety → response chain is now ready.
+### Phase: Functions Host Validation + Real Answer Agent
+We validated the Azure Functions isolated worker host end-to-end and confirmed the full HTTP -> pipeline -> retriever -> planner -> answer -> safety -> response chain is running locally. The answer agent is now Azure OpenAI-backed (planner + answer are real), while safety remains stubbed.
 
 **Files Created:**
 - `FunctionsApp/Agents/AzureOpenAIPlannerAgent.cs` — uses Azure OpenAI to decide if context is sufficient (Answerable/Refuse)
-- `FunctionsApp/Agents/StubAnswerAgent.cs` — builds answer from first hit + citations
+- `FunctionsApp/Agents/AzureOpenAIAnswerAgent.cs` — uses Azure OpenAI to generate grounded answers from retrieved context
 - `FunctionsApp/Agents/StubSafetyReviewerAgent.cs` — always approves (stub)
 - `FunctionsApp/Functions/AskFunction.cs` — POST /ask HTTP trigger, JSON in/out
 - `FunctionsApp/Data/SampleDocumentStore.cs` — 5 seeded documents (RAG, Azure Search, Azure OpenAI, chunking)
 - `.devcontainer/devcontainer.json` — Codespace setup with .NET 8, Node, Core Tools, C# + Copilot extensions
 
 **Files Modified:**
-- `FunctionsApp/FunctionsApp.csproj` — added `Rag.Infrastructure` reference
-- `FunctionsApp/Program.cs` — DI registration: retriever + Azure OpenAI planner + stub answer/safety + pipeline
-- `FunctionsApp/local.settings.json` — empty `AzureWebJobsStorage` (HTTP-only)
-- `rag/global.json` — added `rollForward: latestFeature` for SDK flexibility
+- `FunctionsApp/FunctionsApp.csproj` — includes required Azure/OpenAI packages and project references
+- `FunctionsApp/Program.cs` — DI registration: retriever + Azure OpenAI planner + Azure OpenAI answer + stub safety + pipeline
+- `FunctionsApp/local.settings.json` — local runtime values for host and Azure OpenAI settings
+- `rag/global.json` — `rollForward: latestFeature` for SDK flexibility
 
 ### What Works
-✅ RAG pipeline orchestration (retrieve → plan → answer → review)  
+✅ RAG pipeline orchestration (retrieve -> plan -> answer -> review)  
 ✅ Keyword search retriever with in-memory seed data  
-✅ All 5 unit tests passing  
-✅ Full build succeeds (0 errors)  
-✅ DI wiring complete (real Azure OpenAI planner + stub answer/safety)  
-✅ `POST /ask` function signature ready  
+✅ Functions host starts and discovers both routes (`Ask`, `Health`)  
+✅ `GET /api/health` responds successfully  
+✅ `POST /api/ask` responds with grounded answer + citations  
+✅ Unit tests pass (`RagPipelineTests`: 3 passed)  
+✅ Functions app build succeeds (0 errors)  
+✅ DI wiring complete (real Azure OpenAI planner + real Azure OpenAI answer + stub safety)  
 
 ### What Doesn't Work Yet
-❌ Azure Functions host not discovering/loading functions (Core Tools v4.0.5455 issue on Windows)  
-❌ `func start` fails with "No job functions found" despite public function classes  
-❌ Local smoke test on original machine inconclusive — work moved to VM/Codespace  
+❌ `ISafetyReviewerAgent` is still a stub (no Azure AI Content Safety integration yet)  
+❌ Host reports `azure.functions.webjobs.storage` unhealthy when `AzureWebJobsStorage` is empty (HTTP flow still works)  
+❌ No dedicated refusal-path smoke test has been automated in routine validation yet  
 
 ### Environment Notes
-- **Original machine:** Core Tools v4.0.5455, .NET 8.0.0, winget upgrade partially stuck
-- **VM/Codespace:** Will use .NET 8 base image + Core Tools v4 via npm, guaranteed clean install
-- **Port:** 7071 (AWS Functions default, forwarded in devcontainer)
+- **Current machine:** Core Tools v4.8.0, .NET SDK 10.0.201
+- **Function runtime:** v4, isolated worker
+- **Port:** 7071
 
 ---
 
 ## The Architecture (Why Each Piece Exists)
 
-**Request → Pipeline:**
+**Request -> Pipeline:**
 ```
 POST /api/ask {"question": "...", "top": 5}
     ↓
-AskFunction deserializes → calls RagPipeline.AskAsync()
+AskFunction deserializes -> calls RagPipeline.AskAsync()
 ```
 
 **Pipeline Flow:**
 1. **Retriever** (`ISearchRetriever`) — finds docs (today: keyword scorer; later: Azure AI Search)
 2. **Planner** (`IPlannerAgent`) — decides if we have enough context (today: Azure OpenAI)
-3. **Answer Agent** (`IAnswerAgent`) — generates answer from hits (today: stub; later: GPT-4o grounded)
+3. **Answer Agent** (`IAnswerAgent`) — generates answer from hits (today: Azure OpenAI)
 4. **Safety Reviewer** (`ISafetyReviewerAgent`) — checks for harm/hallucination (today: stub; later: Azure AI Content Safety)
 
 **Why partial stubs?**
-- Full chain works end-to-end without Azure dependencies
-- Each interface can be swapped 1:1 when ready for real Azure services
-- Tests pass with fake implementations, proving the pipeline logic is solid
+- Full chain works end-to-end while remaining components are swapped incrementally
+- Each interface can be replaced with minimal DI changes in `Program.cs`
+- Tests pass with fake implementations, proving pipeline logic is stable
 
-Current state: planner now uses real Azure OpenAI; answer and safety remain stubs.
+Current state: planner and answer use real Azure OpenAI; safety remains stubbed.
 
 ---
 
-## How to Run It (VM or Codespace)
+## How to Run It (Current)
 
-### Prerequisites (handled by devcontainer.json in Codespace)
+### Prerequisites
 ```bash
-# On VM, run manually:
-dotnet --version          # Should be 8.x
-func --version            # Should be 4.x (use: npm install -g azure-functions-core-tools@4)
+dotnet --version          # 8+ (currently 10.0.201)
+func --version            # 4.x (currently 4.8.0)
 ```
 
 ### Start the Host
@@ -89,55 +94,44 @@ func start
 Functions:
     Ask: [POST] http://localhost:7071/api/ask
     Health: [GET] http://localhost:7071/api/health
-
-Azure Functions Core Tools
-...
-Host started (139ms)
 ```
 
-### Test with Postman
+### Smoke Tests
 
-**Request:**
+**Health check:**
+```bash
+GET http://localhost:7071/api/health
 ```
-POST http://localhost:7071/api/ask (or https://[codespace-url]/api/ask)
+
+**Ask happy path:**
+```bash
+POST http://localhost:7071/api/ask
 Content-Type: application/json
 
 {"question": "what is RAG?", "top": 3}
 ```
 
-**Expected Response (200 OK):**
-```json
-{
-  "answered": true,
-  "answerText": "Based on 3 retrieved document(s): RAG stands for Retrieval-Augmented Generation...",
-  "citations": [
-    {"sourceId": "doc-rag-overview", "title": "What is RAG", "sectionPath": "Overview > RAG", "sourceUrl": null},
-    ...
-  ],
-  "refusalReason": null
-}
-```
+Expected: `answered: true` with answer text and citations.
 
-**Test refusal path** (question that matches nothing in seed data):
+**Ask refusal path (pending verification in routine):**
 ```json
 {"question": "kubernetes deployment strategies"}
 ```
-You should get `"answered": false` with refusalReason explaining why.
+Expected: `answered: false` with `refusalReason`.
 
 ---
 
-## Broader Learning Path (After This Checkpoint)
+## Broader Learning Path (Updated)
 
 **Short Term (next 2–3 sessions):**
 1. ✅ **Get Functions host running** on VM/Codespace
-2. **Replace remaining stubs with real Azure services:**
-   - `IAnswerAgent` → Azure OpenAI grounded generation
-   - `ISafetyReviewerAgent` → Azure AI Content Safety
-3. **Add `POST /ingest` endpoint** to seed the retriever from real documents
+2. ✅ **Replace `IAnswerAgent` stub with Azure OpenAI grounded generation**
+3. **Replace `ISafetyReviewerAgent` stub with Azure AI Content Safety**
+4. **Add `POST /ingest` endpoint** to seed the retriever from real documents
 
 **Medium Term (1–2 weeks):**
-- `ISearchRetriever` → Azure AI Search (vector + keyword hybrid)
-- `IEmbeddingService` → Azure OpenAI embeddings
+- `ISearchRetriever` -> Azure AI Search (vector + keyword hybrid)
+- `IEmbeddingService` -> Azure OpenAI embeddings
 - Evaluation harness (measure answer quality, latency, cost)
 - Red-team tests (jailbreak attempts, off-topic, hallucination)
 
@@ -148,77 +142,36 @@ You should get `"answered": false` with refusalReason explaining why.
 
 ---
 
-## Key Design Insights
-
-**1. Retrieval Quality is a Data Problem First**  
-The seed documents determine what questions can be answered. Better chunking and sourcing = better RAG system. The model is secondary.
-
-**2. Interfaces Enable Incremental Swaps**  
-Each component is behind an interface. Stub → Real Azure takes 1 line of code in `Program.cs`. The pipeline never changes.
-
-**3. RAG Expertise = Knowing When NOT to Answer**  
-The planner and safety reviewer are as important as the answer generator. Most RAG failures come from answering confidently when you shouldn't.
-
-**4. Copilot Customizations Travel with the Code**  
-`.github/copilot-instructions.md` and agent definitions live in the repo. On the VM, they're immediately available — Copilot will use them to guide reviews and suggestions.
-
----
-
 ## Files to Know
 
-**Core Logic (read-only after this checkpoint):**
+**Core Logic:**
 - `rag/src/Rag.Core/Pipeline/RagPipeline.cs` — orchestration (the "brain")
 - `rag/src/Rag.Infrastructure/Retrieval/KeywordSearchRetriever.cs` — retrieval seam
-- `rag/src/FunctionsApp/Agents/Stub*.cs` — stub implementations (replace these next)
+- `rag/src/FunctionsApp/Agents/AzureOpenAIPlannerAgent.cs` — real planner
+- `rag/src/FunctionsApp/Agents/AzureOpenAIAnswerAgent.cs` — real answer generator
 
 **Next Edits:**
-- `Program.cs` — DI registration lines (swap in remaining real implementations)
-- `FunctionsApp/Agents/RealAnswerAgent.cs` (new) — Azure OpenAI answer generator
+- `FunctionsApp/Agents/StubSafetyReviewerAgent.cs` — replace with Azure AI Content Safety implementation
 - `FunctionsApp/Functions/IngestFunction.cs` (new) — POST /ingest endpoint
+- `FunctionsApp/Program.cs` — DI swap for safety reviewer
 
 **Testing & Validation:**
-- `rag/tests/Rag.Tests/RagPipelineTests.cs` — pipeline unit tests (all pass ✅)
+- `rag/tests/Rag.Tests/RagPipelineTests.cs` — pipeline unit tests
 - Postman or curl for HTTP smoke tests
-
----
-
-## Copilot on the VM
-
-**Automatically available:**
-- `.github/copilot-instructions.md` — 5-rule C# style baseline (4-space indent, const/typing, XML docs, method size, no dynamic)
-- `.github/instructions/csharp.instructions.md` — C# scoped rules
-- `.github/prompts/lint-*.prompt.md` — domain-specific linting prompts
-- `.github/agents/smart-reviewer.agent.md` — conditional code review agent
-
-**How to use:**
-Open a `.cs` file → Copilot Chat → ask "@smart-reviewer analyze this file" or just reference the instructions in your requests.
-
----
-
-## Troubleshooting
-
-**"No job functions found"**  
-→ Likely Core Tools version mismatch. On VM, ensure `func --version` is 4.8.0+. Reinstall: `npm install -g azure-functions-core-tools@4 --unsafe-perm true`
-
-**"Port 7071 in use"**  
-→ Kill the process: `lsof -ti:7071 | xargs kill -9` (Linux/Mac) or `netstat -ano | findstr :7071` (Windows)
-
-**Postman 401 on Codespace URL**  
-→ Port visibility must be Public. In Codespaces Ports tab, right-click 7071 → Port Visibility → Public.
 
 ---
 
 ## Next Session Checklist
 
-- [ ] On VM, run `cd rag/src/FunctionsApp && func start`
-- [ ] Confirm Functions banner appears (Ask & Health routes visible)
-- [ ] Test POST /ask in Postman, confirm 200 with answer JSON
-- [ ] Test GET /health, confirm 200 OK
-- [ ] (If refusal path fails, debug planner: may be hitting empty retriever)
-- [ ] Once working, replace `StubAnswerAgent` with real GPT-4o grounded answer call
+- [x] Run `cd rag/src/FunctionsApp && func start`
+- [x] Confirm Functions banner appears (Ask & Health routes visible)
+- [x] Test POST /ask, confirm 200 with answer JSON
+- [x] Test GET /health, confirm 200 OK
+- [ ] Test explicit refusal path (`{"question":"kubernetes deployment strategies"}`), verify `answered=false`
 - [ ] Replace `StubSafetyReviewerAgent` with Azure AI Content Safety review
-- [ ] Document insights in session notes
+- [ ] Add `POST /ingest` endpoint
+- [ ] Keep `CHECKPOINT.md` updated immediately after each meaningful progress step
 
 ---
 
-**Good luck on the VM! All the code is there. Copilot will be available the moment you open a `.cs` file. Happy building.** 🚀
+This file is now the source of truth for session continuity. Update it continuously as work progresses.
