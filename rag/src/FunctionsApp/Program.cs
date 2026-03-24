@@ -29,7 +29,7 @@ var host = new HostBuilder()
         services.AddSingleton<ISearchRetriever>(new KeywordSearchRetriever(seedHits));
         services.AddSingleton<IPlannerAgent, AzureOpenAIPlannerAgent>();
         services.AddSingleton<IAnswerAgent, AzureOpenAIAnswerAgent>();
-        services.AddSingleton<ISafetyReviewerAgent, StubSafetyReviewerAgent>();
+        services.AddSingleton<ISafetyReviewerAgent, AzureOpenAISafetyReviewerAgent>();
         services.AddSingleton<IRagPipeline, RagPipeline>();
     })
     .Build();

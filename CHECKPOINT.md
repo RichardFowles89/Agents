@@ -1,8 +1,8 @@
 # RAG Learning Project — Tuesday Checkpoint
 
-**Date:** March 24, 2026  
-**Status:** Functions host verified, real Azure OpenAI planner + answer agent active, safety still stubbed  
-**Next Step:** Replace `StubSafetyReviewerAgent` with Azure AI Content Safety and add refusal-path smoke test to routine checks
+**Date:** March 24, 2026 (Updated 15:30)  
+**Status:** Functions host verified, real Azure OpenAI planner + answer + safety agents active  
+**Next Step:** Test refusal path case explicitly, then add `POST /ingest` endpoint
 
 ## Session Continuity Rule (Permanent)
 
@@ -12,20 +12,22 @@
 
 ## What We Built This Session
 
-### Phase: Functions Host Validation + Real Answer Agent
-We validated the Azure Functions isolated worker host end-to-end and confirmed the full HTTP -> pipeline -> retriever -> planner -> answer -> safety -> response chain is running locally. The answer agent is now Azure OpenAI-backed (planner + answer are real), while safety remains stubbed.
+### Phase 1: Functions Host Validation + Real Answer Agent
+We validated the Azure Functions isolated worker host end-to-end and confirmed the full HTTP -> pipeline -> retriever -> planner -> answer -> safety -> response chain is running locally. The answer agent is now Azure OpenAI-backed (planner + answer + safety are all real).
 
-**Files Created:**
+**Files Created (Phase 1):**
 - `FunctionsApp/Agents/AzureOpenAIPlannerAgent.cs` — uses Azure OpenAI to decide if context is sufficient (Answerable/Refuse)
 - `FunctionsApp/Agents/AzureOpenAIAnswerAgent.cs` — uses Azure OpenAI to generate grounded answers from retrieved context
-- `FunctionsApp/Agents/StubSafetyReviewerAgent.cs` — always approves (stub)
+- `FunctionsApp/Agents/AzureOpenAISafetyReviewerAgent.cs` — uses Azure OpenAI to check for hallucinations, harmful content, and accuracy
+
+**Files Created (Continuation):**
 - `FunctionsApp/Functions/AskFunction.cs` — POST /ask HTTP trigger, JSON in/out
 - `FunctionsApp/Data/SampleDocumentStore.cs` — 5 seeded documents (RAG, Azure Search, Azure OpenAI, chunking)
 - `.devcontainer/devcontainer.json` — Codespace setup with .NET 8, Node, Core Tools, C# + Copilot extensions
 
-**Files Modified:**
+**Files Modified (Phase 1):**
 - `FunctionsApp/FunctionsApp.csproj` — includes required Azure/OpenAI packages and project references
-- `FunctionsApp/Program.cs` — DI registration: retriever + Azure OpenAI planner + Azure OpenAI answer + stub safety + pipeline
+- `FunctionsApp/Program.cs` — DI registration: retriever + Azure OpenAI planner + Azure OpenAI answer + Azure OpenAI safety + pipeline
 - `FunctionsApp/local.settings.json` — local runtime values for host and Azure OpenAI settings
 - `rag/global.json` — `rollForward: latestFeature` for SDK flexibility
 
@@ -37,12 +39,13 @@ We validated the Azure Functions isolated worker host end-to-end and confirmed t
 ✅ `POST /api/ask` responds with grounded answer + citations  
 ✅ Unit tests pass (`RagPipelineTests`: 3 passed)  
 ✅ Functions app build succeeds (0 errors)  
-✅ DI wiring complete (real Azure OpenAI planner + real Azure OpenAI answer + stub safety)  
+✅ DI wiring complete (real Azure OpenAI planner + real Azure OpenAI answer + real Azure OpenAI safety reviewer)  
+✅ Safety reviewer checks for hallucinations, harmful content, and accuracy  
 
 ### What Doesn't Work Yet
-❌ `ISafetyReviewerAgent` is still a stub (no Azure AI Content Safety integration yet)  
 ❌ Host reports `azure.functions.webjobs.storage` unhealthy when `AzureWebJobsStorage` is empty (HTTP flow still works)  
-❌ No dedicated refusal-path smoke test has been automated in routine validation yet  
+❌ No dedicated refusal-path smoke test has been explicitly validated yet (needs test run)  
+❌ `POST /ingest` endpoint not yet created  
 
 ### Environment Notes
 - **Current machine:** Core Tools v4.8.0, .NET SDK 10.0.201
@@ -126,7 +129,7 @@ Expected: `answered: false` with `refusalReason`.
 **Short Term (next 2–3 sessions):**
 1. ✅ **Get Functions host running** on VM/Codespace
 2. ✅ **Replace `IAnswerAgent` stub with Azure OpenAI grounded generation**
-3. **Replace `ISafetyReviewerAgent` stub with Azure AI Content Safety**
+3. ✅ **Replace `ISafetyReviewerAgent` stub with Azure OpenAI safety review**
 4. **Add `POST /ingest` endpoint** to seed the retriever from real documents
 
 **Medium Term (1–2 weeks):**
@@ -161,16 +164,17 @@ Expected: `answered: false` with `refusalReason`.
 
 ---
 
-## Next Session Checklist
+## Current Session Checklist
 
 - [x] Run `cd rag/src/FunctionsApp && func start`
 - [x] Confirm Functions banner appears (Ask & Health routes visible)
 - [x] Test POST /ask, confirm 200 with answer JSON
 - [x] Test GET /health, confirm 200 OK
+- [x] Replace `StubSafetyReviewerAgent` with Azure OpenAI safety review agent
 - [ ] Test explicit refusal path (`{"question":"kubernetes deployment strategies"}`), verify `answered=false`
-- [ ] Replace `StubSafetyReviewerAgent` with Azure AI Content Safety review
+- [ ] Rebuild and verify Functions app still starts
 - [ ] Add `POST /ingest` endpoint
-- [ ] Keep `CHECKPOINT.md` updated immediately after each meaningful progress step
+- [x] Keep `CHECKPOINT.md` updated immediately after each meaningful progress step
 
 ---
 
