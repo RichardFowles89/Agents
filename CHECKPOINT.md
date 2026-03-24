@@ -171,10 +171,15 @@ Expected: `answered: false` with `refusalReason`.
 - [x] Test POST /ask, confirm 200 with answer JSON
 - [x] Test GET /health, confirm 200 OK
 - [x] Replace `StubSafetyReviewerAgent` with Azure OpenAI safety review agent
-- [ ] Test explicit refusal path (`{"question":"kubernetes deployment strategies"}`), verify `answered=false`
-- [ ] Rebuild and verify Functions app still starts
+- [x] Test explicit refusal path (`{"question":"kubernetes deployment strategies"}`), verify `answered=false`
+- [x] Rebuild and verify Functions app still starts
 - [ ] Add `POST /ingest` endpoint
 - [x] Keep `CHECKPOINT.md` updated immediately after each meaningful progress step
+
+### Refusal & Happy Path Test Results (March 24, 17:25)
+- **Refusal path:** POST /api/ask with `{"question":"kubernetes deployment strategies"}` → `answered=false`, `refusalReason="Planner refused to answer with current context."` ✅
+- **Happy path:** POST /api/ask with `{"question":"what is RAG?"}` → `answered=true`, answer text + 3 citations from seeded docs ✅
+- **Safety reviewer:** Approved both refusal and answer responses ✅
 
 ---
 
