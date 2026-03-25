@@ -1,8 +1,10 @@
 using Azure;
 using Azure.AI.OpenAI;
 using Azure.Search.Documents;
+using Azure.Search.Documents.Indexes;
 using FunctionsApp.Agents;
 using FunctionsApp.Data;
+using FunctionsApp.Search;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -56,8 +58,15 @@ var host = new HostBuilder()
         ChatClient chatClient = aoaiClient.GetChatClient(deployment);
         services.AddSingleton(chatClient);
 
-        SearchClient searchClient = new(searchEndpoint, searchIndexName, new AzureKeyCredential(searchApiKey));
+        AzureKeyCredential searchCredential = new(searchApiKey);
+        SearchIndexClient searchIndexClient = new(searchEndpoint, searchCredential);
+        SearchClient searchClient = new(searchEndpoint, searchIndexName, searchCredential);
+        services.AddSingleton(searchIndexClient);
         services.AddSingleton(searchClient);
+        services.AddHostedService(provider =>
+            new AzureSearchIndexBootstrapper(
+                provider.GetRequiredService<SearchIndexClient>(),
+                searchIndexName));
         services.AddSingleton<ISearchRetriever, AzureSearchRetriever>();
         services.AddSingleton<IDocumentChunker, DocumentChunker>();
         services.AddSingleton<IPlannerAgent, AzureOpenAIPlannerAgent>();

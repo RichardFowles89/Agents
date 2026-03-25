@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
 Date: March 25, 2026
-Status: Local pipeline validated, Azure OpenAI agents integrated, Azure AI Search migration started
-Next Step: Provision/verify Azure AI Search index schema, then run Ask/Ingest smoke tests against cloud search
+Status: Local pipeline validated, Azure OpenAI agents integrated, Azure AI Search migration active with startup index auto-create enabled; blocked on ingest with invalid document key validation
+Next Step: Fix chunk ID sanitization (remove colons and special chars), then retry ingest/ask smoke tests
 
 ## Session Continuity Rule (Permanent)
 
@@ -194,19 +194,85 @@ Content-Type: application/json
 - Updated `rag/src/FunctionsApp/local.settings.json` to placeholder values (`REPLACE_ME`) and added Azure Search keys.
 - Validation: `dotnet build rag/RagAssistant.sln` completed without compile errors.
 
+## Azure Search Startup Bootstrap Update (March 25, 2026)
+
+- Added `rag/src/FunctionsApp/Search/AzureSearchIndexBootstrapper.cs` as an `IHostedService`.
+- Startup behavior now checks for configured index and creates it automatically when missing.
+- Index schema created on startup:
+  - `id` (key, string)
+  - `sourceId` (string)
+  - `title` (searchable string)
+  - `sectionPath` (searchable string)
+  - `chunkText` (searchable string)
+  - `sourceUrl` (string)
+- Updated `rag/src/FunctionsApp/Program.cs`:
+  - Registered `SearchIndexClient`.
+  - Registered hosted bootstrap service with `AZURE_SEARCH_INDEX_NAME`.
+  - Kept `SearchClient` registration for runtime retrieval/ingest.
+- Validation: `dotnet build rag/RagAssistant.sln` succeeded after bootstrap integration.
+
 ### Remaining Work For This Migration
 
-1. Ensure Azure AI Search index exists with fields used by retriever:
-   - `id` (key, string)
-   - `sourceId` (string)
-   - `title` (searchable string)
-   - `sectionPath` (searchable string)
-   - `chunkText` (searchable string)
-   - `sourceUrl` (string)
-2. Set real values for Azure Search settings in local environment.
-3. Run host and smoke test:
+1. Set real values for Azure Search settings in local environment.
+2. Run host and smoke test:
    - POST `/api/ingest` to push chunks to Azure Search.
    - POST `/api/ask` to confirm retrieval-backed answers.
+
+## Session End Checkpoint (March 25, 2026 - Session End)
+
+### Blocker Encountered
+
+Attempted first `/api/ingest` call against Azure AI Search cloud index with Postman payload:
+```json
+{
+  "documents": [
+    {
+      "id": "doc-001",
+      "title": "RAG Basics",
+      "content": "Retrieval-Augmented Generation combines search retrieval with LLM generation...",
+      "sourceUrl": "https://example.com/rag-basics"
+    }
+  ]
+}
+```
+
+**Error**: Azure Search validation rejected document key (chunk ID).
+- HTTP 400 (Bad Request)
+- Error code: `InvalidName`
+- Message: `Invalid document key: ':0000'. Keys can only contain letters, digits, underscore (_), dash (-), or equal sign (=).`
+
+**Root Cause**: DocumentChunker creates chunk IDs like `doc-001:0000` (colon-separated chunks). Azure Search indexes reject IDs containing colons.
+
+**Location**: [rag/src/Rag.Infrastructure/Chunking/DocumentChunker.cs](rag/src/Rag.Infrastructure/Chunking/DocumentChunker.cs)
+- Current format uses colon (`sourceId:chunkNumber`) which is invalid for Azure Search.
+- Fix needed: Replace colon with hyphen or underscore (e.g., `doc-001_0000` or `doc-001-0000`).
+
+### Next Session Action Plan
+
+1. **Fix chunk ID format** in DocumentChunker to use hyphen or underscore instead of colon.
+2. **Rebuild and test** `dotnet build rag/RagAssistant.sln`.
+3. **Run host** and retry `/api/ingest` smoke test.
+4. **Verify `/api/ask`** retrieves ingested content from cloud index.
+5. **Update checkpoint** once smoke tests pass.
+
+### Session Summary
+
+- ✅ Azure AI Search service created (rag20260325, free tier, uksouth).
+- ✅ Azure Search retriever implementation (AzureSearchRetriever.cs).
+- ✅ Startup index bootstrap (auto-creates rag-chunks index on host start).
+- ✅ DI wiring and config validation for Search settings.
+- ✅ Solution builds successfully.
+- ❌ Ingest blocked on chunk ID validation (colon character not allowed).
+- ⏳ Ask endpoint not yet tested against cloud index.
+
+### Credentials and Resources
+
+- Azure Search Service: `rag20260325` in `rdfrdfrag-rg` (uksouth)
+- Index Name: `rag-chunks`
+- Settings in [rag/src/FunctionsApp/local.settings.json](rag/src/FunctionsApp/local.settings.json):
+  - `AZURE_SEARCH_ENDPOINT`: https://rag20260325.search.windows.net
+  - `AZURE_SEARCH_KEY`: (keep safe, not in source control)
+  - `AZURE_SEARCH_INDEX_NAME`: rag-chunks
 
 ---
 
