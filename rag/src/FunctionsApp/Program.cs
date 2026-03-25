@@ -1,5 +1,6 @@
 using Azure;
 using Azure.AI.OpenAI;
+using Azure.Search.Documents;
 using FunctionsApp.Agents;
 using FunctionsApp.Data;
 using Microsoft.Extensions.Configuration;
@@ -34,6 +35,9 @@ var host = new HostBuilder()
         string endpointValue = GetRequiredSetting(config, "AZURE_OPENAI_ENDPOINT");
         string apiKey = GetRequiredSetting(config, "AZURE_OPENAI_KEY");
         string deployment = GetRequiredSetting(config, "AZURE_OPENAI_DEPLOYMENT");
+        string searchEndpointValue = GetRequiredSetting(config, "AZURE_SEARCH_ENDPOINT");
+        string searchApiKey = GetRequiredSetting(config, "AZURE_SEARCH_KEY");
+        string searchIndexName = GetRequiredSetting(config, "AZURE_SEARCH_INDEX_NAME");
 
         if (!Uri.TryCreate(endpointValue, UriKind.Absolute, out Uri? endpoint))
         {
@@ -41,13 +45,20 @@ var host = new HostBuilder()
                 "Configuration value 'AZURE_OPENAI_ENDPOINT' is not a valid absolute URI.");
         }
 
+        if (!Uri.TryCreate(searchEndpointValue, UriKind.Absolute, out Uri? searchEndpoint))
+        {
+            throw new InvalidOperationException(
+                "Configuration value 'AZURE_SEARCH_ENDPOINT' is not a valid absolute URI.");
+        }
+
         AzureKeyCredential credential = new(apiKey);
         AzureOpenAIClient aoaiClient = new(endpoint, credential);
         ChatClient chatClient = aoaiClient.GetChatClient(deployment);
         services.AddSingleton(chatClient);
 
-        IReadOnlyList<RetrievalHit> seedHits = SampleDocumentStore.GetSeededHits();
-        services.AddSingleton<ISearchRetriever>(new KeywordSearchRetriever(seedHits));
+        SearchClient searchClient = new(searchEndpoint, searchIndexName, new AzureKeyCredential(searchApiKey));
+        services.AddSingleton(searchClient);
+        services.AddSingleton<ISearchRetriever, AzureSearchRetriever>();
         services.AddSingleton<IDocumentChunker, DocumentChunker>();
         services.AddSingleton<IPlannerAgent, AzureOpenAIPlannerAgent>();
         services.AddSingleton<IAnswerAgent, AzureOpenAIAnswerAgent>();

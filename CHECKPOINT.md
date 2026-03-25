@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
 Date: March 25, 2026
-Status: Local pipeline validated (Ask/Health/Ingest), Azure OpenAI agents integrated, housekeeping in progress
-Next Step: Expand comprehensive tests, then prepare cloud deployment path
+Status: Local pipeline validated, Azure OpenAI agents integrated, Azure AI Search migration started
+Next Step: Provision/verify Azure AI Search index schema, then run Ask/Ingest smoke tests against cloud search
 
 ## Session Continuity Rule (Permanent)
 
@@ -177,6 +177,36 @@ Content-Type: application/json
 - `Program.cs` now validates required Azure OpenAI settings with clear errors instead of crashing with a null URI exception.
 - Validation: `func host start --pause-on-error` now starts and advertises Ask, Health, and Ingest routes from `rag/src/FunctionsApp`.
 - Known local warning remains: AzureWebJobsStorage unhealthy when unset.
+
+## Azure Search Migration Update (March 25, 2026)
+
+- Decision: next stub removal target is local in-memory retrieval/indexing; migration target is Azure AI Search.
+- Added `Azure.Search.Documents` dependency to `rag/src/Rag.Infrastructure/Rag.Infrastructure.csproj`.
+- Implemented `rag/src/Rag.Infrastructure/Retrieval/AzureSearchRetriever.cs`:
+  - `RetrieveAsync` now queries Azure AI Search and maps results to `RetrievalHit`.
+  - `IngestAsync` now uses `MergeOrUpload` to index chunks into Azure AI Search.
+- Updated DI/config wiring in `rag/src/FunctionsApp/Program.cs`:
+  - `ISearchRetriever` now resolves to `AzureSearchRetriever`.
+  - Added required settings validation for:
+    - `AZURE_SEARCH_ENDPOINT`
+    - `AZURE_SEARCH_KEY`
+    - `AZURE_SEARCH_INDEX_NAME`
+- Updated `rag/src/FunctionsApp/local.settings.json` to placeholder values (`REPLACE_ME`) and added Azure Search keys.
+- Validation: `dotnet build rag/RagAssistant.sln` completed without compile errors.
+
+### Remaining Work For This Migration
+
+1. Ensure Azure AI Search index exists with fields used by retriever:
+   - `id` (key, string)
+   - `sourceId` (string)
+   - `title` (searchable string)
+   - `sectionPath` (searchable string)
+   - `chunkText` (searchable string)
+   - `sourceUrl` (string)
+2. Set real values for Azure Search settings in local environment.
+3. Run host and smoke test:
+   - POST `/api/ingest` to push chunks to Azure Search.
+   - POST `/api/ask` to confirm retrieval-backed answers.
 
 ---
 
