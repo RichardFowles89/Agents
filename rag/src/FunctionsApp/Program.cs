@@ -12,16 +12,36 @@ using Rag.Core.Pipeline;
 using Rag.Infrastructure.Chunking;
 using Rag.Infrastructure.Retrieval;
 
+static string GetRequiredSetting(IConfiguration config, string key)
+{
+    string? value = config[key];
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        throw new InvalidOperationException(
+            $"Missing required configuration value '{key}'. " +
+            "For local debugging, set it in local.settings.json under Values or as an environment variable.");
+    }
+
+    return value;
+}
+
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
         IConfiguration config = context.Configuration;
 
-        Uri endpoint = new(config["AZURE_OPENAI_ENDPOINT"]!);
-        AzureKeyCredential credential = new(config["AZURE_OPENAI_KEY"]!);
-        string deployment = config["AZURE_OPENAI_DEPLOYMENT"]!;
+        string endpointValue = GetRequiredSetting(config, "AZURE_OPENAI_ENDPOINT");
+        string apiKey = GetRequiredSetting(config, "AZURE_OPENAI_KEY");
+        string deployment = GetRequiredSetting(config, "AZURE_OPENAI_DEPLOYMENT");
 
+        if (!Uri.TryCreate(endpointValue, UriKind.Absolute, out Uri? endpoint))
+        {
+            throw new InvalidOperationException(
+                "Configuration value 'AZURE_OPENAI_ENDPOINT' is not a valid absolute URI.");
+        }
+
+        AzureKeyCredential credential = new(apiKey);
         AzureOpenAIClient aoaiClient = new(endpoint, credential);
         ChatClient chatClient = aoaiClient.GetChatClient(deployment);
         services.AddSingleton(chatClient);

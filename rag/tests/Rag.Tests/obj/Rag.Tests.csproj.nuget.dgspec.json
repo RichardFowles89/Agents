@@ -337,14 +337,14 @@
         }
       }
     },
-    "C:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj": {
+    "c:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj",
+        "projectUniqueName": "c:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj",
         "projectName": "Rag.Infrastructure",
-        "projectPath": "C:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj",
+        "projectPath": "c:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\Richard\\.nuget\\packages\\",
-        "outputPath": "C:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\obj\\",
+        "outputPath": "c:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Richard\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -699,8 +699,8 @@
               "C:\\repos\\Agents\\rag\\src\\Rag.Core\\Rag.Core.csproj": {
                 "projectPath": "C:\\repos\\Agents\\rag\\src\\Rag.Core\\Rag.Core.csproj"
               },
-              "C:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj": {
-                "projectPath": "C:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj"
+              "c:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj": {
+                "projectPath": "c:\\repos\\Agents\\rag\\src\\Rag.Infrastructure\\Rag.Infrastructure.csproj"
               }
             }
           }

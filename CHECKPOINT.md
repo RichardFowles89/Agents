@@ -173,6 +173,10 @@ Content-Type: application/json
 
 - Root git ignore was tightened to prevent committing local build artifacts and binary outputs (dll/exe/pdb/cache and related generated files).
 - Note: ignore rules do not untrack files that were already committed; tracked artifacts require explicit index cleanup when ready.
+- VS Code Run/Debug flow was corrected to use Azure Functions host startup instead of launching the app DLL directly.
+- `Program.cs` now validates required Azure OpenAI settings with clear errors instead of crashing with a null URI exception.
+- Validation: `func host start --pause-on-error` now starts and advertises Ask, Health, and Ingest routes from `rag/src/FunctionsApp`.
+- Known local warning remains: AzureWebJobsStorage unhealthy when unset.
 
 ---
 
