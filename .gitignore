@@ -1,11 +1,34 @@
 # Build outputs
 bin/
 obj/
+out/
+TestResults/
+
+# .NET runtime and package caches
+artifacts/
+*.cache
+*.tmp
+*.temp
+*.log
+
+# Compiled binaries and symbols
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.lib
+*.exp
+*.so
+*.dylib
 
 # NuGet
 *.nupkg
 *.snupkg
 .nuget/
+packages/
+
+# Dotnet tools and lock files generated locally
+.dotnet/
 
 # VS / Rider
 .vs/
@@ -14,6 +37,14 @@ obj/
 *.suo
 *.userosscache
 *.sln.docstates
+*.rsuser
+
+# VS Code workspace settings (local machine state)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 
 # Azure Functions local config (contains secrets)
 local.settings.json
@@ -27,3 +58,10 @@ appsettings.Local.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Node (if used for tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
