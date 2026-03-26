@@ -30,7 +30,7 @@ public sealed class AzureSearchRetriever : ISearchRetriever
         {
             Size = top,
             QueryType = SearchQueryType.Simple,
-            SearchMode = SearchMode.All,
+            SearchMode = SearchMode.Any,
             IncludeTotalCount = false
         };
 

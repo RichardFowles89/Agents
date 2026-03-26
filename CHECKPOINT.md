@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
-Date: March 25, 2026
-Status: Local pipeline validated, Azure OpenAI agents integrated, Azure AI Search migration active with startup index auto-create enabled; blocked on ingest with invalid document key validation
-Next Step: Fix chunk ID sanitization (remove colons and special chars), then retry ingest/ask smoke tests
+Date: March 26, 2026
+Status: End-to-end Azure AI Search pipeline validated. Ingest and Ask smoke tests passing against cloud index.
+Next Step: Expand test coverage (pipeline branch coverage, retriever tests, function endpoint edge cases)
 
 ## Session Continuity Rule (Permanent)
 
@@ -76,9 +76,10 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 
 ## Known Gaps / Risks
 
-- AzureWebJobsStorage can report unhealthy when unset locally; HTTP endpoints still function.
-- Ingested data is currently in-memory and does not persist across host restarts.
+- AzureWebJobsStorage reports unhealthy when unset locally; HTTP endpoints still function.
+- Ingested data persists in Azure AI Search (not in-memory) — survives host restarts.
 - Comprehensive test suite is not complete yet (additional branch/error/concurrency coverage needed).
+- Azure Search uses keyword (`SearchMode.Any`) — no vector/semantic search yet.
 
 ---
 
@@ -217,6 +218,23 @@ Content-Type: application/json
 2. Run host and smoke test:
    - POST `/api/ingest` to push chunks to Azure Search.
    - POST `/api/ask` to confirm retrieval-backed answers.
+
+## Session Update (March 26, 2026)
+
+### Fixes Applied
+
+- **SearchMode.All → SearchMode.Any** in `rag/src/Rag.Infrastructure/Retrieval/AzureSearchRetriever.cs`.
+  - `All` required every query token to match, causing "what is RAG?" to return no hits.
+  - `Any` returns documents matching any token, which is correct for keyword retrieval.
+- **Chunk ID colon fix** was already in place from previous session (`doc-001_0000` format with `SanitizeIdSegment`).
+
+### Validated Behaviour (March 26, 2026)
+
+- `POST /api/ingest` — document accepted, 1 chunk indexed in Azure AI Search (no key validation error).
+- `POST /api/ask {"question":"what is RAG?"}` — answered=true, grounded answer returned from cloud index.
+- `POST /api/ask {"question":"kubernetes deployment strategies"}` — answered=false, planner refusal as expected.
+
+---
 
 ## Session End Checkpoint (March 25, 2026 - Session End)
 
