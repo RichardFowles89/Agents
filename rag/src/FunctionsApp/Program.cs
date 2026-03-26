@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenAI.Chat;
+using OpenAI.Embeddings;
 using Rag.Core.Contracts;
 using Rag.Core.Models;
 using Rag.Core.Pipeline;
@@ -37,6 +38,7 @@ var host = new HostBuilder()
         string endpointValue = GetRequiredSetting(config, "AZURE_OPENAI_ENDPOINT");
         string apiKey = GetRequiredSetting(config, "AZURE_OPENAI_KEY");
         string deployment = GetRequiredSetting(config, "AZURE_OPENAI_DEPLOYMENT");
+        string embeddingDeployment = GetRequiredSetting(config, "AZURE_OPENAI_EMBEDDING_DEPLOYMENT");
         string searchEndpointValue = GetRequiredSetting(config, "AZURE_SEARCH_ENDPOINT");
         string searchApiKey = GetRequiredSetting(config, "AZURE_SEARCH_KEY");
         string searchIndexName = GetRequiredSetting(config, "AZURE_SEARCH_INDEX_NAME");
@@ -56,7 +58,10 @@ var host = new HostBuilder()
         AzureKeyCredential credential = new(apiKey);
         AzureOpenAIClient aoaiClient = new(endpoint, credential);
         ChatClient chatClient = aoaiClient.GetChatClient(deployment);
+        EmbeddingClient embeddingClient = aoaiClient.GetEmbeddingClient(embeddingDeployment);
         services.AddSingleton(chatClient);
+        services.AddSingleton(embeddingClient);
+        services.AddSingleton<IEmbeddingService, AzureOpenAIEmbeddingService>();
 
         AzureKeyCredential searchCredential = new(searchApiKey);
         SearchIndexClient searchIndexClient = new(searchEndpoint, searchCredential);
