@@ -26,7 +26,7 @@ public sealed class AzureSearchIndexBootstrapper : IHostedService
 
         if (exists)
         {
-            return;
+            await _indexClient.DeleteIndexAsync(_indexName, cancellationToken);
         }
 
         var fields = new List<SearchField>
@@ -36,10 +36,15 @@ public sealed class AzureSearchIndexBootstrapper : IHostedService
             new SearchableField("title") { IsFilterable = false, IsSortable = false, IsFacetable = false },
             new SearchableField("sectionPath") { IsFilterable = false, IsSortable = false, IsFacetable = false },
             new SearchableField("chunkText") { IsFilterable = false, IsSortable = false, IsFacetable = false },
-            new SimpleField("sourceUrl", SearchFieldDataType.String)
+            new SimpleField("sourceUrl", SearchFieldDataType.String),
+            new VectorSearchField("embedding", 1536, "hnsw-profile")
         };
 
-        SearchIndex index = new(_indexName, fields);
+        var vectorSearch = new VectorSearch();
+        vectorSearch.Algorithms.Add(new HnswAlgorithmConfiguration("hnsw-config"));
+        vectorSearch.Profiles.Add(new VectorSearchProfile("hnsw-profile", "hnsw-config"));
+
+        SearchIndex index = new(_indexName, fields) { VectorSearch = vectorSearch };
         await _indexClient.CreateIndexAsync(index, cancellationToken);
     }
 

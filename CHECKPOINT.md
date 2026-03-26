@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
 Date: March 26, 2026
-Status: End-to-end Azure AI Search pipeline validated. Ingest and Ask smoke tests passing against cloud index.
-Next Step: Expand test coverage (pipeline branch coverage, retriever tests, function endpoint edge cases)
+Status: Vector embeddings pipeline fully integrated. Chunks are now embedded and indexed with vector fields. Ready for vector/hybrid search.
+Next Step: Implement vector + hybrid retrieval in AzureSearchRetriever, then smoke test end-to-end
 
 ## Session Continuity Rule (Permanent)
 
@@ -77,9 +77,9 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 ## Known Gaps / Risks
 
 - AzureWebJobsStorage reports unhealthy when unset locally; HTTP endpoints still function.
-- Ingested data persists in Azure AI Search (not in-memory) — survives host restarts.
+- Ingested data persists in Azure AI Search with embeddings — survives host restarts.
+- Retrieval is still keyword-only (BM25); vector/hybrid search not yet wired in retriever (Batch 3).
 - Comprehensive test suite is not complete yet (additional branch/error/concurrency coverage needed).
-- Azure Search uses keyword (`SearchMode.Any`) — no vector/semantic search yet.
 
 ---
 
@@ -155,18 +155,25 @@ Content-Type: application/json
 
 ## Next Work Queue
 
-1. Baseline validation each session start:
-   - Build + test + smoke checks for Ask/Health/Ingest.
-2. Comprehensive tests:
+1. **Batch 3 — Vector/Hybrid Retrieval** (IN PROGRESS):
+   - Update `AzureSearchRetriever.RetrieveAsync` to embed query and perform hybrid search (keyword + vector)
+   - Make `ISearchRetriever` depend on `IEmbeddingService`
+   - Ensure both keyword and vector results are fused/ranked
+
+2. **Smoke Test After Batch 3:**
+   - `POST /api/ingest` — verify embeddings are stored
+   - `POST /api/ask {"question":"what is RAG?"}` — confirm vector retrieval works
+   - `POST /api/ask {"question":"kubernetes..."}` — confirm refusal still works
+
+3. **Comprehensive Tests** (Future):
    - Pipeline branch coverage (refuse, no hits, safety reject).
-   - Retriever ingest/retrieval and concurrency tests.
+   - Retriever ingest/retrieval and vector search quality tests.
    - Function endpoint validation/error-path tests.
-3. Local reliability cleanup:
-   - Address or document AzureWebJobsStorage local behavior clearly.
-4. Persistence strategy:
-   - Decide temporary persistence approach or document in-memory limitation explicitly.
-5. Cloud readiness:
-   - Define Azure config mapping for Function App, OpenAI, and Search.
+
+4. **Production Readiness** (Future):
+   - Cloud deployment setup and configuration mapping.
+   - Performance testing and index tuning.
+   - Persistent storage beyond Azure Search TTL if needed.
 
 ---
 
@@ -234,6 +241,55 @@ Content-Type: application/json
 - `POST /api/ask {"question":"what is RAG?"}` — answered=true, grounded answer returned from cloud index.
 - `POST /api/ask {"question":"kubernetes deployment strategies"}` — answered=false, planner refusal as expected.
 
+## Vector Embeddings Implementation (March 26, 2026)
+
+### Batch 1: Embedding Service + DI Wiring
+
+- Created `rag/src/FunctionsApp/Agents/AzureOpenAIEmbeddingService.cs`
+  - Implements `IEmbeddingService`
+  - Uses Azure OpenAI `text-embedding-3-small` deployment
+  - Returns `IReadOnlyList<float>` vectors (1536 dimensions)
+- Added `AzureOpenAI_EMBEDDING_DEPLOYMENT: text-embedding-3-small` config in `local.settings.json`
+- Updated `Program.cs`:
+  - Added `using OpenAI.Embeddings`
+  - Registered `EmbeddingClient` from Azure OpenAI client
+  - Registered `IEmbeddingService → AzureOpenAIEmbeddingService`
+- Validation: Build passes, embedding service callable from DI container
+
+### Batch 2: Vector Index + Indexer + Ingest Pipeline
+
+- Updated `rag/src/FunctionsApp/Search/AzureSearchIndexBootstrapper.cs`
+  - Now deletes and recreates the index on startup (enables schema changes)
+  - Added `embedding` field (1536 dimensions, HNSW vector search algorithm)
+  - Added `VectorSearch` configuration with HNSW profile
+- Created `rag/src/Rag.Infrastructure/Retrieval/AzureSearchIndexer.cs`
+  - Implements `ISearchIndexer`
+  - Takes `IReadOnlyList<DocumentChunkWithEmbedding>`, uploads to Azure Search with embedding vectors
+  - Uses MergeOrUpload semantics for idempotent indexing
+- Updated `rag/src/FunctionsApp/Functions/IngestFunction.cs`
+  - Replaced `ISearchRetriever` dependency with `IEmbeddingService` + `ISearchIndexer`
+  - New ingest flow: chunk → embed each chunk → store with embeddings
+  - Removed keyword-only fallback; all indexing now vector-backed
+- Updated `Program.cs`:
+  - Registered `ISearchIndexer → AzureSearchIndexer`
+- Validation: Build passes, Postman test confirms ingest works with vector indexing
+
+### Known Behavior (March 26, 2026 - Batch 2 Complete)
+
+- ✅ Embedding deployment `text-embedding-3-small` deployed in Azure OpenAI resource
+- ✅ Index now has vector field; recreated on host startup
+- ✅ Ingest function embeds chunks and indexes them with vectors
+- ✅ `POST /api/ingest` succeeds and creates vector embeddings
+- ⏳ `POST /api/ask` still uses keyword-only retrieval (Batch 3 will add vector search)
+
+---
+
+## Previous Session Validated Behaviour (March 26, 2026)
+
+- `POST /api/ingest` — document accepted, 1 chunk indexed in Azure AI Search (no key validation error).
+- `POST /api/ask {"question":"what is RAG?"}` — answered=true, grounded answer returned from cloud index.
+- `POST /api/ask {"question":"kubernetes deployment strategies"}` — answered=false, planner refusal as expected.
+
 ---
 
 ## Session End Checkpoint (March 25, 2026 - Session End)
@@ -285,9 +341,18 @@ Attempted first `/api/ingest` call against Azure AI Search cloud index with Post
 
 ### Credentials and Resources
 
+- Azure OpenAI Resource: `rdfrdfrag-aoai` in `rdfrdfrag-rg` (uksouth)
+  - Deployment `gpt-4o` for planner/answer/safety reasoning
+  - Deployment `text-embedding-3-small` for chunk embeddings (1536 dims)
 - Azure Search Service: `rag20260325` in `rdfrdfrag-rg` (uksouth)
-- Index Name: `rag-chunks`
+  - Index Name: `rag-chunks`
+  - Fields: id, sourceId, title, sectionPath, chunkText, sourceUrl, embedding (1536d vector)
+  - Vector search: HNSW algorithm profile
 - Settings in [rag/src/FunctionsApp/local.settings.json](rag/src/FunctionsApp/local.settings.json):
+  - `AZURE_OPENAI_ENDPOINT`: https://uksouth.api.cognitive.microsoft.com/
+  - `AZURE_OPENAI_KEY`: (keep safe, not in source control)
+  - `AZURE_OPENAI_DEPLOYMENT`: gpt-4o
+  - `AZURE_OPENAI_EMBEDDING_DEPLOYMENT`: text-embedding-3-small
   - `AZURE_SEARCH_ENDPOINT`: https://rag20260325.search.windows.net
   - `AZURE_SEARCH_KEY`: (keep safe, not in source control)
   - `AZURE_SEARCH_INDEX_NAME`: rag-chunks
@@ -298,8 +363,9 @@ Attempted first `/api/ingest` call against Azure AI Search cloud index with Post
 
 When resuming:
 
-1. Start from this file first.
-2. Confirm current branch/repo status.
-3. Run local validation (build/tests/smoke).
-4. Continue from Next Work Queue.
-5. Immediately update CHECKPOINT.md after each meaningful action.
+1. **Start from this file first** — CHECKPOINT.md is the source of truth.
+2. **Build status**: Last successful build was with Batch 2 complete. All projects should build cleanly.
+3. **Host status**: Previous host started successfully with vector field index creation.
+4. **What's next**: Batch 3 (vector/hybrid retrieval) — modify `AzureSearchRetriever.RetrieveAsync` to embed queries and perform hybrid search.
+5. **Testing approach**: After Batch 3, run local host and test `/api/ingest` + `/api/ask` smoke tests.
+6. **Update checkpoint** after each meaningful action — don't lose context.

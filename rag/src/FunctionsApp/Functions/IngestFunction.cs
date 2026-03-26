@@ -8,13 +8,14 @@ using Rag.Core.Models;
 namespace FunctionsApp.Functions;
 
 /// <summary>
-/// HTTP trigger function to ingest documents into the search retriever.
-/// Accepts a list of documents, chunks them, and adds them to the index.
+/// HTTP trigger function to ingest documents into the search index.
+/// Accepts a list of documents, chunks them, generates embeddings, and indexes them.
 /// </summary>
 public sealed class IngestFunction
 {
-    private readonly ISearchRetriever _retriever;
     private readonly IDocumentChunker _chunker;
+    private readonly IEmbeddingService _embeddingService;
+    private readonly ISearchIndexer _indexer;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -27,10 +28,11 @@ public sealed class IngestFunction
         OverlapCharacters: 100
     );
 
-    public IngestFunction(ISearchRetriever retriever, IDocumentChunker chunker)
+    public IngestFunction(IDocumentChunker chunker, IEmbeddingService embeddingService, ISearchIndexer indexer)
     {
-        _retriever = retriever;
         _chunker = chunker;
+        _embeddingService = embeddingService;
+        _indexer = indexer;
     }
 
     [Function("Ingest")]
@@ -58,7 +60,14 @@ public sealed class IngestFunction
                 allChunks.AddRange(chunks);
             }
 
-            await _retriever.IngestAsync(allChunks, cancellationToken);
+            List<DocumentChunkWithEmbedding> chunksWithEmbeddings = new(allChunks.Count);
+            foreach (DocumentChunk chunk in allChunks)
+            {
+                IReadOnlyList<float> vector = await _embeddingService.CreateEmbeddingAsync(chunk.ChunkText, cancellationToken);
+                chunksWithEmbeddings.Add(new DocumentChunkWithEmbedding(chunk, vector));
+            }
+
+            await _indexer.IndexChunksAsync(chunksWithEmbeddings, cancellationToken);
 
             var response = new
             {

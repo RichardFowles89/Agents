@@ -73,6 +73,7 @@ var host = new HostBuilder()
                 provider.GetRequiredService<SearchIndexClient>(),
                 searchIndexName));
         services.AddSingleton<ISearchRetriever, AzureSearchRetriever>();
+        services.AddSingleton<ISearchIndexer, AzureSearchIndexer>();
         services.AddSingleton<IDocumentChunker, DocumentChunker>();
         services.AddSingleton<IPlannerAgent, AzureOpenAIPlannerAgent>();
         services.AddSingleton<IAnswerAgent, AzureOpenAIAnswerAgent>();
