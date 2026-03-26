@@ -8,15 +8,18 @@ using Rag.Core.Models;
 namespace Rag.Infrastructure.Retrieval;
 
 /// <summary>
-/// Azure AI Search implementation for retrieval and ingestion.
+/// Azure AI Search implementation for vector/hybrid retrieval and ingestion.
+/// Performs hybrid search combining keyword BM25 and semantic vector similarity.
 /// </summary>
 public sealed class AzureSearchRetriever : ISearchRetriever
 {
     private readonly SearchClient _searchClient;
+    private readonly IEmbeddingService _embeddingService;
 
-    public AzureSearchRetriever(SearchClient searchClient)
+    public AzureSearchRetriever(SearchClient searchClient, IEmbeddingService embeddingService)
     {
         _searchClient = searchClient;
+        _embeddingService = embeddingService;
     }
 
     public async Task<IReadOnlyList<RetrievalHit>> RetrieveAsync(string question, int top, CancellationToken cancellationToken = default)
@@ -26,10 +29,17 @@ public sealed class AzureSearchRetriever : ISearchRetriever
             return [];
         }
 
+        // Embed the question for vector search
+        IReadOnlyList<float> queryVector = await _embeddingService.CreateEmbeddingAsync(question, cancellationToken);
+        if (queryVector.Count == 0)
+        {
+            return [];
+        }
+
         var options = new SearchOptions
         {
             Size = top,
-            QueryType = SearchQueryType.Simple,
+            QueryType = SearchQueryType.Full,
             SearchMode = SearchMode.Any,
             IncludeTotalCount = false
         };
@@ -40,6 +50,11 @@ public sealed class AzureSearchRetriever : ISearchRetriever
         options.Select.Add("sectionPath");
         options.Select.Add("chunkText");
         options.Select.Add("sourceUrl");
+
+        VectorizedQuery vectorQuery = new(queryVector.ToArray());
+        vectorQuery.Fields.Add("embedding");
+        vectorQuery.KNearestNeighborsCount = top;
+        options.VectorSearch = new VectorSearchOptions { Queries = { vectorQuery } };
 
         SearchResults<SearchDocument> results = await _searchClient.SearchAsync<SearchDocument>(
             question,

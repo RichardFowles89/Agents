@@ -72,7 +72,10 @@ var host = new HostBuilder()
             new AzureSearchIndexBootstrapper(
                 provider.GetRequiredService<SearchIndexClient>(),
                 searchIndexName));
-        services.AddSingleton<ISearchRetriever, AzureSearchRetriever>();
+        services.AddSingleton<ISearchRetriever>(provider =>
+            new AzureSearchRetriever(
+                provider.GetRequiredService<SearchClient>(),
+                provider.GetRequiredService<IEmbeddingService>()));
         services.AddSingleton<ISearchIndexer, AzureSearchIndexer>();
         services.AddSingleton<IDocumentChunker, DocumentChunker>();
         services.AddSingleton<IPlannerAgent, AzureOpenAIPlannerAgent>();

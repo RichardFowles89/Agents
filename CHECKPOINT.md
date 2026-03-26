@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
 Date: March 26, 2026
-Status: Vector embeddings pipeline fully integrated. Chunks are now embedded and indexed with vector fields. Ready for vector/hybrid search.
-Next Step: Implement vector + hybrid retrieval in AzureSearchRetriever, then smoke test end-to-end
+Status: Full vector/hybrid RAG pipeline complete. Embeddings, vector indexing, and hybrid retrieval all integrated.
+Next Step: Run end-to-end smoke tests (ingest + ask), then project is feature-complete
 
 ## Session Continuity Rule (Permanent)
 
@@ -155,25 +155,17 @@ Content-Type: application/json
 
 ## Next Work Queue
 
-1. **Batch 3 — Vector/Hybrid Retrieval** (IN PROGRESS):
-   - Update `AzureSearchRetriever.RetrieveAsync` to embed query and perform hybrid search (keyword + vector)
-   - Make `ISearchRetriever` depend on `IEmbeddingService`
-   - Ensure both keyword and vector results are fused/ranked
-
-2. **Smoke Test After Batch 3:**
+1. **Smoke Test After Batch 3** (IMMEDIATE):
+   - Start host: `cd rag/src/FunctionsApp && func start`
    - `POST /api/ingest` — verify embeddings are stored
-   - `POST /api/ask {"question":"what is RAG?"}` — confirm vector retrieval works
+   - `POST /api/ask {"question":"what is RAG?"}` — confirm vector hybrid retrieval works
    - `POST /api/ask {"question":"kubernetes..."}` — confirm refusal still works
+   - ✅ If all pass: **Project is feature-complete**
 
-3. **Comprehensive Tests** (Future):
-   - Pipeline branch coverage (refuse, no hits, safety reject).
-   - Retriever ingest/retrieval and vector search quality tests.
-   - Function endpoint validation/error-path tests.
-
-4. **Production Readiness** (Future):
-   - Cloud deployment setup and configuration mapping.
-   - Performance testing and index tuning.
-   - Persistent storage beyond Azure Search TTL if needed.
+2. **Optional Post-Completion:**
+   - Comprehensive tests (pipeline branch coverage, error paths)
+   - Performance testing and tuning
+   - Cloud deployment setup
 
 ---
 
@@ -281,6 +273,36 @@ Content-Type: application/json
 - ✅ Ingest function embeds chunks and indexes them with vectors
 - ✅ `POST /api/ingest` succeeds and creates vector embeddings
 - ⏳ `POST /api/ask` still uses keyword-only retrieval (Batch 3 will add vector search)
+
+---
+
+## Previous Session Validated Behaviour (March 26, 2026)
+
+- `POST /api/ingest` — document accepted, 1 chunk indexed in Azure AI Search (no key validation error).
+- `POST /api/ask {"question":"what is RAG?"}` — answered=true, grounded answer returned from cloud index.
+- `POST /api/ask {"question":"kubernetes deployment strategies"}` — answered=false, planner refusal as expected.
+
+### Batch 3: Vector/Hybrid Retrieval
+
+- Updated `rag/src/Rag.Infrastructure/Retrieval/AzureSearchRetriever.cs`
+  - Now takes `IEmbeddingService` as constructor dependency
+  - `RetrieveAsync` now:
+    - Embeds the query using `IEmbeddingService.CreateEmbeddingAsync`
+    - Performs hybrid search combining keyword (BM25) and vector similarity
+    - Uses `VectorizedQuery` with 1536-dimensional embedding
+    - Returns fused results from both signals
+  - Query flow: keyword search + vector search → combined ranking by relevance score
+- Updated `rag/src/FunctionsApp/Program.cs`
+  - DI registration for `ISearchRetriever` now uses factory pattern
+  - Injects both `SearchClient` and `IEmbeddingService` into `AzureSearchRetriever`
+- Validation: Build passes; ready for end-to-end testing
+
+### Known Behavior (March 26, 2026 - Batch 3 Complete)
+
+- ✅ Full embedding pipeline: question → embed → hybrid search → results
+- ✅ Hybrid search combines keyword BM25 + vector semantic signals
+- ✅ All three batches built and compiled successfully
+- ⏳ **Ready for end-to-end smoke testing**
 
 ---
 
