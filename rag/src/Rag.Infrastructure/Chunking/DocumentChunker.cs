@@ -28,7 +28,8 @@ public sealed class DocumentChunker : IDocumentChunker
         {
             foreach (string part in SplitWithOverlap(sectionText, options.MaxChunkCharacters, options.OverlapCharacters))
             {
-                string chunkId = $"{document.SourceId}:{chunkIndex:D4}";
+                string safeSourceId = SanitizeIdSegment(document.SourceId);
+                string chunkId = $"{safeSourceId}-{chunkIndex:D4}";
                 chunks.Add(new DocumentChunk(
                     chunkId,
                     document.SourceId,
@@ -78,6 +79,29 @@ public sealed class DocumentChunker : IDocumentChunker
 
             buffer.Clear();
         }
+    }
+
+    private static string SanitizeIdSegment(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "doc";
+        }
+
+        StringBuilder builder = new(value.Length);
+        foreach (char ch in value)
+        {
+            if (char.IsLetterOrDigit(ch) || ch is '_' or '-' or '=')
+            {
+                builder.Append(ch);
+            }
+            else
+            {
+                builder.Append('-');
+            }
+        }
+
+        return builder.ToString();
     }
 
     private static IEnumerable<string> SplitWithOverlap(string text, int maxChars, int overlapChars)
