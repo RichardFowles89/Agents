@@ -22,6 +22,7 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
   - POST /api/ingest
 - Ingestion works and newly ingested content is retrievable in subsequent ask calls.
 - Planner, answer, and safety reviewer are wired to Azure OpenAI implementations.
+- Vector/hybrid retrieval implementation is complete in code; final smoke re-validation is pending.
 - Unit tests were previously green for RagPipelineTests (5 passing at last checkpoint verification).
 
 ---
@@ -78,7 +79,7 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 
 - AzureWebJobsStorage reports unhealthy when unset locally; HTTP endpoints still function.
 - Ingested data persists in Azure AI Search with embeddings — survives host restarts.
-- Retrieval is still keyword-only (BM25); vector/hybrid search not yet wired in retriever (Batch 3).
+- Vector/hybrid retrieval is implemented; end-to-end smoke verification for the latest Batch 3 changes is still pending.
 - Comprehensive test suite is not complete yet (additional branch/error/concurrency coverage needed).
 
 ---
@@ -386,8 +387,8 @@ Attempted first `/api/ingest` call against Azure AI Search cloud index with Post
 When resuming:
 
 1. **Start from this file first** — CHECKPOINT.md is the source of truth.
-2. **Build status**: Last successful build was with Batch 2 complete. All projects should build cleanly.
+2. **Build status**: Last successful build was with Batches 1-3 complete. All projects should build cleanly.
 3. **Host status**: Previous host started successfully with vector field index creation.
-4. **What's next**: Batch 3 (vector/hybrid retrieval) — modify `AzureSearchRetriever.RetrieveAsync` to embed queries and perform hybrid search.
-5. **Testing approach**: After Batch 3, run local host and test `/api/ingest` + `/api/ask` smoke tests.
+4. **What's next**: Run post-Batch-3 smoke tests only (no more implementation batches pending).
+5. **Testing approach**: Start local host and test `/api/ingest` + `/api/ask` happy/refusal paths to confirm final end-to-end behavior.
 6. **Update checkpoint** after each meaningful action — don't lose context.
