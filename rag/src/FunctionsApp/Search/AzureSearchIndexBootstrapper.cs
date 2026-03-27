@@ -26,7 +26,7 @@ public sealed class AzureSearchIndexBootstrapper : IHostedService
 
         if (exists)
         {
-            await _indexClient.DeleteIndexAsync(_indexName, cancellationToken);
+            return;
         }
 
         var fields = new List<SearchField>

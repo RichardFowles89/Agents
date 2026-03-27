@@ -214,6 +214,22 @@ Content-Type: application/json
   - `dotnet build rag/RagAssistant.sln` succeeded
   - `RagPipelineTests` pass (`4/4`)
 
+### Ask Refusal Fix (March 27, 2026)
+
+- Symptom observed: both in-scope and out-of-scope `/api/ask` calls returned planner refusal.
+- Root causes identified:
+  - Index was being recreated on each host start (data loss risk).
+  - Ingest payload commonly used `id` while model expected `sourceId`, causing key collisions and poor retrieval context.
+  - Retrieval parsing mode was too strict for natural-language ask queries.
+- Fixes applied:
+  - `rag/src/FunctionsApp/Search/AzureSearchIndexBootstrapper.cs` now creates index only when missing (no unconditional delete).
+  - `rag/src/FunctionsApp/Functions/IngestFunction.cs` now accepts both `id` and `sourceId` input fields and maps them safely to `SourceDocument.SourceId`.
+  - `rag/src/Rag.Infrastructure/Retrieval/AzureSearchRetriever.cs` switched to `SearchQueryType.Simple` with `SearchMode.Any` for better recall.
+  - `rag/src/FunctionsApp/Agents/AzureOpenAIPlannerAgent.cs` includes lexical-grounding fallback when LLM planner is overly strict.
+- Validation:
+  - In-scope question (`What does RAG stand for?`) now returns `answered: true` with citations.
+  - Out-of-scope question (`How do I implement Kubernetes blue-green deployments?`) still returns planner refusal.
+
 ---
 
 ## Housekeeping Update (March 25, 2026)

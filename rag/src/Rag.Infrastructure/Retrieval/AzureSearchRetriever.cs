@@ -39,7 +39,7 @@ public sealed class AzureSearchRetriever : ISearchRetriever
         var options = new SearchOptions
         {
             Size = top,
-            QueryType = SearchQueryType.Full,
+            QueryType = SearchQueryType.Simple,
             SearchMode = SearchMode.Any,
             IncludeTotalCount = false
         };

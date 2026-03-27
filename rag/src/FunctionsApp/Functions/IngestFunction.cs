@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Rag.Core.Contracts;
@@ -40,8 +41,10 @@ public sealed class IngestFunction
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "ingest")] HttpRequestData req,
         CancellationToken cancellationToken)
     {
-        IngestRequest? request = await JsonSerializer.DeserializeAsync<IngestRequest>(
+        IngestPayload? payload = await JsonSerializer.DeserializeAsync<IngestPayload>(
             req.Body, JsonOptions, cancellationToken);
+
+        IngestRequest? request = payload is null ? null : payload.ToIngestRequest();
 
         if (request is null || request.Documents.Count == 0)
         {
@@ -95,6 +98,44 @@ public sealed class IngestFunction
             HttpResponseData error = req.CreateResponse(HttpStatusCode.InternalServerError);
             await error.WriteStringAsync($"Error processing ingest: {ex.Message}", cancellationToken);
             return error;
+        }
+    }
+
+    private sealed record IngestPayload(
+        IReadOnlyList<IngestSourceDocumentPayload>? Documents)
+    {
+        public IngestRequest ToIngestRequest()
+        {
+            if (Documents is null)
+            {
+                return new IngestRequest([]);
+            }
+
+            IReadOnlyList<SourceDocument> documents = Documents
+                .Where(doc => doc is not null)
+                .Select(doc => doc!.ToSourceDocument())
+                .ToList();
+
+            return new IngestRequest(documents);
+        }
+    }
+
+    private sealed record IngestSourceDocumentPayload(
+        [property: JsonPropertyName("id")] string? Id,
+        [property: JsonPropertyName("sourceId")] string? SourceId,
+        [property: JsonPropertyName("title")] string? Title,
+        [property: JsonPropertyName("content")] string? Content,
+        [property: JsonPropertyName("sourceUrl")] string? SourceUrl,
+        [property: JsonPropertyName("tags")] IReadOnlyList<string>? Tags)
+    {
+        public SourceDocument ToSourceDocument()
+        {
+            string sourceId = !string.IsNullOrWhiteSpace(SourceId) ? SourceId! : (Id ?? string.Empty);
+            string title = Title ?? string.Empty;
+            string content = Content ?? string.Empty;
+            IReadOnlyList<string> tags = Tags ?? [];
+
+            return new SourceDocument(sourceId, title, content, SourceUrl, tags);
         }
     }
 }

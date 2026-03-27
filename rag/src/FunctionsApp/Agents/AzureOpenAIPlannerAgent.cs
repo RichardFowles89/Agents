@@ -24,6 +24,13 @@ internal sealed class AzureOpenAIPlannerAgent : IPlannerAgent
         - Refuse — the chunks are irrelevant or do not contain enough information
         """;
 
+    private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "how", "in", "is", "it",
+        "of", "on", "or", "that", "the", "this", "to", "was", "what", "when", "where", "which", "who",
+        "why", "with", "do", "does", "did", "can", "could", "would", "should", "please", "project"
+    };
+
     /// <summary>Initialises the agent with a pre-configured <see cref="ChatClient"/>.</summary>
     public AzureOpenAIPlannerAgent(ChatClient chatClient)
     {
@@ -51,10 +58,17 @@ internal sealed class AzureOpenAIPlannerAgent : IPlannerAgent
             cancellationToken: cancellationToken);
 
         string reply = response.Content[0].Text.Trim();
+        if (reply.Contains("Answerable", StringComparison.OrdinalIgnoreCase))
+        {
+            return PlannerDecision.Answerable;
+        }
 
-        return reply.Contains("Answerable", StringComparison.OrdinalIgnoreCase)
-            ? PlannerDecision.Answerable
-            : PlannerDecision.Refuse;
+        if (HasMeaningfulLexicalGrounding(question, retrievalHits))
+        {
+            return PlannerDecision.Answerable;
+        }
+
+        return PlannerDecision.Refuse;
     }
 
     private static string BuildChunksText(IReadOnlyList<RetrievalHit> hits)
@@ -71,5 +85,38 @@ internal sealed class AzureOpenAIPlannerAgent : IPlannerAgent
         }
 
         return sb.ToString();
+    }
+
+    private static bool HasMeaningfulLexicalGrounding(string question, IReadOnlyList<RetrievalHit> hits)
+    {
+        if (hits.Count == 0)
+        {
+            return false;
+        }
+
+        string combinedContext = string.Join(' ', hits.Select(hit => hit.ChunkText));
+        HashSet<string> contextTerms = Tokenize(combinedContext);
+        HashSet<string> questionTerms = Tokenize(question);
+
+        int overlapCount = questionTerms.Count(term => contextTerms.Contains(term));
+        return overlapCount >= 1;
+    }
+
+    private static HashSet<string> Tokenize(string text)
+    {
+        var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (string raw in text.Split([' ', '\t', '\r', '\n', '.', ',', ';', ':', '!', '?', '"', '\'', '(', ')', '[', ']', '{', '}', '-', '_', '/'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            string token = raw.Trim().ToLowerInvariant();
+            if (token.Length < 3 || StopWords.Contains(token))
+            {
+                continue;
+            }
+
+            tokens.Add(token);
+        }
+
+        return tokens;
     }
 }
