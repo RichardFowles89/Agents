@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
-Date: March 26, 2026
+Date: March 27, 2026
 Status: Feature-complete RAG solution validated end-to-end. Ingest, hybrid retrieval, planning, answering, and safety review all working.
-Next Step: Optional hardening (test expansion, performance tuning, cloud deployment readiness)
+Next Step: Agent-RAG learning track Day 1 - build eval runner/telemetry on top of baseline question set
 
 ## Session Continuity Rule (Permanent)
 
@@ -155,10 +155,27 @@ Content-Type: application/json
 
 ## Next Work Queue
 
-1. **Optional Post-Completion:**
+1. **Immediate Learning Track Tasks:**
+  - Build a baseline eval runner that executes the fixed question set and reports answer/refusal accuracy and latency.
+  - Add per-stage telemetry to `/api/ask` for retrieval, planner, answer, and safety timings.
+  - Capture baseline metrics before adding agentic retrieval loops or rerankers.
+
+2. **Optional Post-Completion Hardening:**
    - Comprehensive tests (pipeline branch coverage, error paths)
    - Performance testing and tuning
    - Cloud deployment setup
+
+## Session Update (March 27, 2026)
+
+### Agent-RAG Learning Kickoff
+
+- Created baseline evaluation dataset at `rag/tests/evals/baseline-questions.json`.
+- Dataset contains 20 questions split across:
+  - `in_scope_direct` (8)
+  - `in_scope_paraphrased` (8)
+  - `out_of_scope` (4)
+- Each item includes `id`, `question`, `expected` (`answer` or `refuse`), and `category`.
+- Purpose: establish an objective benchmark before implementing agentic retrieval loops and reranking stacks.
 
 ---
 

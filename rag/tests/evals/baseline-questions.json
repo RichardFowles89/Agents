@@ -1,0 +1,122 @@
+[
+  {
+    "id": "q01",
+    "question": "What does RAG stand for?",
+    "expected": "answer",
+    "category": "in_scope_direct"
+  },
+  {
+    "id": "q02",
+    "question": "What is the purpose of retrieval in a RAG system?",
+    "expected": "answer",
+    "category": "in_scope_direct"
+  },
+  {
+    "id": "q03",
+    "question": "Why are citations useful in grounded answers?",
+    "expected": "answer",
+    "category": "in_scope_direct"
+  },
+  {
+    "id": "q04",
+    "question": "What endpoint is used to ingest documents?",
+    "expected": "answer",
+    "category": "in_scope_direct"
+  },
+  {
+    "id": "q05",
+    "question": "What endpoint is used to ask a question?",
+    "expected": "answer",
+    "category": "in_scope_direct"
+  },
+  {
+    "id": "q06",
+    "question": "What does the planner do in the pipeline?",
+    "expected": "answer",
+    "category": "in_scope_direct"
+  },
+  {
+    "id": "q07",
+    "question": "What does the safety reviewer do before returning a response?",
+    "expected": "answer",
+    "category": "in_scope_direct"
+  },
+  {
+    "id": "q08",
+    "question": "What is hybrid retrieval in this project?",
+    "expected": "answer",
+    "category": "in_scope_direct"
+  },
+  {
+    "id": "q09",
+    "question": "How does this app combine search and generation to reduce hallucinations?",
+    "expected": "answer",
+    "category": "in_scope_paraphrased"
+  },
+  {
+    "id": "q10",
+    "question": "If I upload new docs, which API should I call to make them queryable?",
+    "expected": "answer",
+    "category": "in_scope_paraphrased"
+  },
+  {
+    "id": "q11",
+    "question": "How does the app decide when it should refuse to answer?",
+    "expected": "answer",
+    "category": "in_scope_paraphrased"
+  },
+  {
+    "id": "q12",
+    "question": "Where do semantic vectors get used in the query flow?",
+    "expected": "answer",
+    "category": "in_scope_paraphrased"
+  },
+  {
+    "id": "q13",
+    "question": "Why are documents split into chunks before indexing?",
+    "expected": "answer",
+    "category": "in_scope_paraphrased"
+  },
+  {
+    "id": "q14",
+    "question": "What happens after retrieval but before answer generation?",
+    "expected": "answer",
+    "category": "in_scope_paraphrased"
+  },
+  {
+    "id": "q15",
+    "question": "How does this project keep answers grounded in indexed content?",
+    "expected": "answer",
+    "category": "in_scope_paraphrased"
+  },
+  {
+    "id": "q16",
+    "question": "What do I call first in a fresh environment before asking questions?",
+    "expected": "answer",
+    "category": "in_scope_paraphrased"
+  },
+  {
+    "id": "q17",
+    "question": "How do I implement Kubernetes blue-green deployments?",
+    "expected": "refuse",
+    "category": "out_of_scope"
+  },
+  {
+    "id": "q18",
+    "question": "What is the best medication for seasonal allergies?",
+    "expected": "refuse",
+    "category": "out_of_scope"
+  },
+  {
+    "id": "q19",
+    "question": "Who won the most recent Formula 1 race?",
+    "expected": "refuse",
+    "category": "out_of_scope"
+  },
+  {
+    "id": "q20",
+    "question": "Can you design a home mortgage portfolio strategy for me?",
+    "expected": "refuse",
+    "category": "out_of_scope"
+  }
+]
