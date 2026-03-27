@@ -2,7 +2,7 @@
 
 Date: March 27, 2026
 Status: **Strong Agent RAG v1 Complete**. Full end-to-end validated: ingest, hybrid retrieval, planning, answering, safety review, and agentic retry orchestration all working.
-Next Step (Optional): Batch 2 (query decomposition or clarification agent) → Batch 3 (reranking) → MCP/APM packaging
+Next Step (Immediate Next Session): Run the app, call `/api/health` + `/api/ingest` + `/api/ask`, and walk through code paths in debug mode as a refresher.
 
 ## Session Continuity Rule (Permanent)
 
@@ -483,3 +483,16 @@ When resuming:
 - `POST /api/ask` happy path succeeded with grounded answer and citations.
 - `POST /api/ask` refusal path succeeded for out-of-scope question.
 - Result: project is now feature-complete from a functional RAG perspective.
+
+## Session Update (March 27, 2026 - End of Session Handoff)
+
+### Confirmed First Task For Next Session
+
+- Start Functions host locally.
+- Call endpoints in order:
+  - `GET /api/health`
+  - `POST /api/ingest`
+  - `POST /api/ask`
+- Step through the live request flow in debug mode to refresh current architecture and control flow:
+  - AskFunction -> RagPipeline.AskAsync -> RetrieveAndAssessAsync -> Query rewrite retry loop (if triggered) -> GenerateReviewedResponseAsync -> safety review -> HTTP response
+- After refresher walkthrough, decide whether to begin Batch 2 enhancement (clarification agent preferred, decomposition as alternative).
