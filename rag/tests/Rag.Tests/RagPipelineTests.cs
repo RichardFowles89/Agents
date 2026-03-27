@@ -37,7 +37,7 @@ public class RagPipelineTests
         FakeRetriever retriever = new([]);
         FakePlanner planner = new(PlannerDecision.Refuse);
         FakeAnswerAgent answerer = new(new AnswerDraft("Should not run", []));
-        FakeQueryRewriteAgent rewriter = new(question => question);
+        FakeQueryRewriteAgent rewriter = new(question => "rewritten query");
         FakeSafetyReviewer safety = new(new SafetyReviewResult(true, "ok"));
 
         RagPipeline pipeline = new(retriever, rewriter, planner, answerer, safety);
@@ -47,6 +47,10 @@ public class RagPipelineTests
         Assert.Contains("Planner refused", response.RefusalReason);
         Assert.Equal(0, answerer.CallCount);
         Assert.Equal(0, safety.CallCount);
+        Assert.NotNull(response.Diagnostics);
+        Assert.True(response.Diagnostics.RetryTriggered);
+        Assert.Equal(2, response.Diagnostics.AttemptsUsed);
+        Assert.Equal("rewritten query", response.Diagnostics.RewrittenQuery);
     }
 
     [Fact]
@@ -68,6 +72,28 @@ public class RagPipelineTests
         Assert.Equal("Missing citations", response.RefusalReason);
         Assert.Equal(1, answerer.CallCount);
         Assert.Equal(1, safety.CallCount);
+        Assert.NotNull(response.Diagnostics);
+        Assert.Equal(1, response.Diagnostics.AttemptsUsed);
+    }
+
+    [Fact]
+    public async Task AskAsync_HonorsMaxAgentRetries_WhenPlannerKeepsRefusing()
+    {
+        FakeRetriever retriever = new([]);
+        FakePlanner planner = new(PlannerDecision.Refuse);
+        FakeAnswerAgent answerer = new(new AnswerDraft("Should not run", []));
+        int rewriteCount = 0;
+        FakeQueryRewriteAgent rewriter = new(_ => $"rewrite-{++rewriteCount}");
+        FakeSafetyReviewer safety = new(new SafetyReviewResult(true, "ok"));
+
+        RagPipeline pipeline = new(retriever, rewriter, planner, answerer, safety);
+        AskResponse response = await pipeline.AskAsync(new AskRequest("Question", Top: 3, MaxAgentRetries: 2));
+
+        Assert.False(response.Answered);
+        Assert.NotNull(response.Diagnostics);
+        Assert.Equal(3, response.Diagnostics.AttemptsUsed);
+        Assert.Equal(2, response.Diagnostics.MaxRetries);
+        Assert.True(response.Diagnostics.RetryTriggered);
     }
 
     private sealed class FakeRetriever : ISearchRetriever

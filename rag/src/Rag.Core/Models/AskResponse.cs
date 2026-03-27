@@ -4,5 +4,6 @@ public sealed record AskResponse(
     bool Answered,
     string AnswerText,
     IReadOnlyList<Citation> Citations,
-    string? RefusalReason
+    string? RefusalReason,
+    AskDiagnostics? Diagnostics = null
 );

@@ -5,6 +5,8 @@ namespace Rag.Core.Pipeline;
 
 public sealed class RagPipeline : IRagPipeline
 {
+    private const int MaxSupportedAgentRetries = 3;
+
     private readonly ISearchRetriever _retriever;
     private readonly IQueryRewriteAgent _queryRewriteAgent;
     private readonly IPlannerAgent _planner;
@@ -32,42 +34,76 @@ public sealed class RagPipeline : IRagPipeline
             return new AskResponse(false, string.Empty, [], "Question is required.");
         }
 
-        (IReadOnlyList<RetrievalHit> hits, PlannerDecision decision) = await RetrieveAndAssessAsync(
-            request.Question,
-            request.Question,
-            request.Top,
-            cancellationToken);
+        int maxRetries = Math.Clamp(request.MaxAgentRetries, 0, MaxSupportedAgentRetries);
+        List<AskAttemptTrace> attemptTraces = new();
+        string retrievalQuery = request.Question;
+        string? rewrittenQueryUsed = null;
+        bool retryTriggered = false;
+        bool hasPreviousHits = false;
+        IReadOnlyList<RetrievalHit> previousHits = [];
 
-        if (decision != PlannerDecision.Answerable)
+        (IReadOnlyList<RetrievalHit> hits, PlannerDecision decision) = ([], PlannerDecision.Refuse);
+
+        for (int attempt = 0; attempt <= maxRetries; attempt++)
         {
+            (hits, decision) = await RetrieveAndAssessAsync(
+                request.Question,
+                retrievalQuery,
+                request.Top,
+                cancellationToken);
+
+            bool retrievalImproved = !hasPreviousHits || HasRetrievalImproved(previousHits, hits);
+
+            attemptTraces.Add(new AskAttemptTrace(
+                attempt + 1,
+                retrievalQuery,
+                hits.Count,
+                decision,
+                QueryRewritten: attempt > 0,
+                RetrievalImproved: retrievalImproved));
+
+            if (decision == PlannerDecision.Answerable || attempt == maxRetries)
+            {
+                break;
+            }
+
             string rewrittenQuery = await _queryRewriteAgent.RewriteForRetrievalAsync(
                 request.Question,
                 decision,
                 hits,
                 cancellationToken);
 
-            if (!string.IsNullOrWhiteSpace(rewrittenQuery) &&
-                !string.Equals(rewrittenQuery, request.Question, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(rewrittenQuery) ||
+                string.Equals(rewrittenQuery, retrievalQuery, StringComparison.OrdinalIgnoreCase))
             {
-                (hits, decision) = await RetrieveAndAssessAsync(
-                    request.Question,
-                    rewrittenQuery,
-                    request.Top,
-                    cancellationToken);
+                break;
             }
+
+            retryTriggered = true;
+            rewrittenQueryUsed = rewrittenQuery;
+            previousHits = hits;
+            hasPreviousHits = true;
+            retrievalQuery = rewrittenQuery;
         }
+
+        AskDiagnostics diagnostics = new(
+            AttemptsUsed: attemptTraces.Count,
+            MaxRetries: maxRetries,
+            RetryTriggered: retryTriggered,
+            RewrittenQuery: rewrittenQueryUsed,
+            Attempts: attemptTraces);
 
         if (decision == PlannerDecision.Refuse)
         {
-            return new AskResponse(false, string.Empty, [], "Planner refused to answer with current context.");
+            return new AskResponse(false, string.Empty, [], "Planner refused to answer with current context.", diagnostics);
         }
 
         if (decision == PlannerDecision.NeedsMoreContext)
         {
-            return new AskResponse(false, string.Empty, [], "Planner requested more context before answering.");
+            return new AskResponse(false, string.Empty, [], "Planner requested more context before answering.", diagnostics);
         }
 
-        return await GenerateReviewedResponseAsync(request.Question, hits, cancellationToken);
+        return await GenerateReviewedResponseAsync(request.Question, hits, diagnostics, cancellationToken);
     }
 
     private async Task<(IReadOnlyList<RetrievalHit> Hits, PlannerDecision Decision)> RetrieveAndAssessAsync(
@@ -84,6 +120,7 @@ public sealed class RagPipeline : IRagPipeline
     private async Task<AskResponse> GenerateReviewedResponseAsync(
         string question,
         IReadOnlyList<RetrievalHit> hits,
+        AskDiagnostics diagnostics,
         CancellationToken cancellationToken)
     {
         AnswerDraft draft = await _answerAgent.GenerateAsync(question, hits, cancellationToken);
@@ -91,9 +128,26 @@ public sealed class RagPipeline : IRagPipeline
 
         if (!review.IsApproved)
         {
-            return new AskResponse(false, string.Empty, [], review.Reason);
+            return new AskResponse(false, string.Empty, [], review.Reason, diagnostics);
         }
 
-        return new AskResponse(true, draft.AnswerText, draft.Citations, null);
+        return new AskResponse(true, draft.AnswerText, draft.Citations, null, diagnostics);
+    }
+
+    private static bool HasRetrievalImproved(IReadOnlyList<RetrievalHit> previousHits, IReadOnlyList<RetrievalHit> currentHits)
+    {
+        if (currentHits.Count == 0)
+        {
+            return false;
+        }
+
+        if (previousHits.Count == 0)
+        {
+            return true;
+        }
+
+        HashSet<string> previousIds = previousHits.Select(hit => hit.ChunkId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        int overlap = currentHits.Count(hit => previousIds.Contains(hit.ChunkId));
+        return overlap < currentHits.Count;
     }
 }

@@ -2,7 +2,7 @@
 
 Date: March 27, 2026
 Status: Feature-complete RAG solution validated end-to-end. Ingest, hybrid retrieval, planning, answering, and safety review all working.
-Next Step: Validate Agentic RAG v1 retry behavior via smoke tests, then add reranking stack
+Next Step: Run smoke tests for Batch 1 strong-agentic controls (retry policy + diagnostics), then add reranking stack
 
 ## Session Continuity Rule (Permanent)
 
@@ -24,6 +24,7 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 - Planner, answer, and safety reviewer are wired to Azure OpenAI implementations.
 - Vector/hybrid retrieval implementation is complete and smoke-validated.
 - Agentic RAG v1 retry orchestration is implemented in pipeline (query rewrite + one re-retrieval attempt).
+- Batch 1 strong-agentic controls implemented: configurable retry limit + attempt diagnostics metadata.
 - Unit tests were previously green for RagPipelineTests (5 passing at last checkpoint verification).
 
 ---
@@ -195,6 +196,23 @@ Content-Type: application/json
 - Validation:
   - `dotnet build rag/RagAssistant.sln` succeeded
   - `RagPipelineTests` pass (`3/3`)
+
+### Batch 1 Strong-Agentic Controls
+
+- Added `AskRequest.MaxAgentRetries` (default `1`) to control retry depth.
+- Added diagnostics models:
+  - `rag/src/Rag.Core/Models/AskDiagnostics.cs`
+  - `rag/src/Rag.Core/Models/AskAttemptTrace.cs`
+- Extended `AskResponse` to include optional `Diagnostics` payload.
+- Updated `rag/src/Rag.Core/Pipeline/RagPipeline.cs`:
+  - bounded retry loop (`0..MaxAgentRetries`)
+  - duplicate-rewrite guard (stop when rewritten query repeats)
+  - basic no-gain tracking per attempt via `RetrievalImproved`
+  - diagnostics emitted on success/refusal/safety-reject paths
+- Updated `rag/tests/Rag.Tests/RagPipelineTests.cs` for new behavior.
+- Validation:
+  - `dotnet build rag/RagAssistant.sln` succeeded
+  - `RagPipelineTests` pass (`4/4`)
 
 ---
 
