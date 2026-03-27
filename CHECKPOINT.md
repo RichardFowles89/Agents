@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
 Date: March 27, 2026
-Status: Feature-complete RAG solution validated end-to-end. Ingest, hybrid retrieval, planning, answering, and safety review all working.
-Next Step: Run smoke tests for Batch 1 strong-agentic controls (retry policy + diagnostics), then add reranking stack
+Status: **Strong Agent RAG v1 Complete**. Full end-to-end validated: ingest, hybrid retrieval, planning, answering, safety review, and agentic retry orchestration all working.
+Next Step (Optional): Batch 2 (query decomposition or clarification agent) → Batch 3 (reranking) → MCP/APM packaging
 
 ## Session Continuity Rule (Permanent)
 
@@ -156,20 +156,39 @@ Content-Type: application/json
 
 ---
 
-## Next Work Queue
+## Next Work Queue (March 27, 2026 - Deferred)
 
-1. **Immediate Learning Track Tasks:**
-  - Smoke test Agentic RAG v1 retry path with paraphrased in-scope and out-of-scope questions.
-  - Confirm retry triggers only when planner declines initial retrieval.
-  - Capture before/after examples showing retry rescued answerability (if applicable).
+**Batch 1 (Strong Agentic Controls) - COMPLETE ✅**
+- ✅ Bounded retry loop with configurable max retries (0-3 supported)
+- ✅ Query rewrite agent integrated (LLM-based query improvement)
+- ✅ Planner gate with lexical fallback for robustness
+- ✅ Diagnostics metadata with per-attempt tracing
+- ✅ Validated: in-scope questions answered, out-of-scope questions refused
 
-2. **Next Advanced Capability:**
-  - Add reranking stack (candidate retrieval -> rerank -> final context for generation).
+**Batch 2 (Second Agent Action) - Optional Future Enhancement**
+- Choose one:
+  - **Option A:** Query decomposition (split multi-hop questions → sub-questions loop)
+  - **Option B:** Clarification agent (detect ambiguity, ask user for follow-up)
+- Expected timeline: 2-3 days for implementation + validation
+- Recommendation: Option B for faster delivery (simpler test surface)
 
-3. **Optional Post-Completion Hardening:**
-   - Comprehensive tests (pipeline branch coverage, error paths)
-   - Performance testing and tuning
-   - Cloud deployment setup
+**Batch 3 (Reranking Stack) - Optional Future Enhancement**
+- Fetch top 50 candidates instead of 5
+- Add reranker layer (LLM or cross-encoder) to re-rank 50 → 5
+- Generate answers from reranked results
+- Expected impact: higher precision, lower false-omissions (FOD)
+- Expected timeline: 3-4 days for implementation + validation
+
+**Batch 4 (Integration/Packaging) - Optional Future Enhancement**
+- Package as MCP (Model Context Protocol) server
+- Define agent capability manifest with tool schemas
+- Release as APM package version 0.1
+- Expected timeline: 2-3 days
+
+**Hardening Tasks** (if needed before production):
+- Comprehensive error path and branch coverage testing
+- Performance profiling and optimization
+- Cloud deployment setup (Azure Container Registry, App Service, etc.)
 
 ## Session Update (March 27, 2026)
 
