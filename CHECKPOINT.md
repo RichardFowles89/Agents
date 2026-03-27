@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
 Date: March 26, 2026
-Status: Full vector/hybrid RAG pipeline complete. Embeddings, vector indexing, and hybrid retrieval all integrated.
-Next Step: Run end-to-end smoke tests (ingest + ask), then project is feature-complete
+Status: Feature-complete RAG solution validated end-to-end. Ingest, hybrid retrieval, planning, answering, and safety review all working.
+Next Step: Optional hardening (test expansion, performance tuning, cloud deployment readiness)
 
 ## Session Continuity Rule (Permanent)
 
@@ -22,7 +22,7 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
   - POST /api/ingest
 - Ingestion works and newly ingested content is retrievable in subsequent ask calls.
 - Planner, answer, and safety reviewer are wired to Azure OpenAI implementations.
-- Vector/hybrid retrieval implementation is complete in code; final smoke re-validation is pending.
+- Vector/hybrid retrieval implementation is complete and smoke-validated.
 - Unit tests were previously green for RagPipelineTests (5 passing at last checkpoint verification).
 
 ---
@@ -79,7 +79,6 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 
 - AzureWebJobsStorage reports unhealthy when unset locally; HTTP endpoints still function.
 - Ingested data persists in Azure AI Search with embeddings — survives host restarts.
-- Vector/hybrid retrieval is implemented; end-to-end smoke verification for the latest Batch 3 changes is still pending.
 - Comprehensive test suite is not complete yet (additional branch/error/concurrency coverage needed).
 
 ---
@@ -156,14 +155,7 @@ Content-Type: application/json
 
 ## Next Work Queue
 
-1. **Smoke Test After Batch 3** (IMMEDIATE):
-   - Start host: `cd rag/src/FunctionsApp && func start`
-   - `POST /api/ingest` — verify embeddings are stored
-   - `POST /api/ask {"question":"what is RAG?"}` — confirm vector hybrid retrieval works
-   - `POST /api/ask {"question":"kubernetes..."}` — confirm refusal still works
-   - ✅ If all pass: **Project is feature-complete**
-
-2. **Optional Post-Completion:**
+1. **Optional Post-Completion:**
    - Comprehensive tests (pipeline branch coverage, error paths)
    - Performance testing and tuning
    - Cloud deployment setup
@@ -389,6 +381,16 @@ When resuming:
 1. **Start from this file first** — CHECKPOINT.md is the source of truth.
 2. **Build status**: Last successful build was with Batches 1-3 complete. All projects should build cleanly.
 3. **Host status**: Previous host started successfully with vector field index creation.
-4. **What's next**: Run post-Batch-3 smoke tests only (no more implementation batches pending).
-5. **Testing approach**: Start local host and test `/api/ingest` + `/api/ask` happy/refusal paths to confirm final end-to-end behavior.
+4. **What's next**: Focus on optional hardening and production readiness tasks.
+5. **Testing approach**: Core smoke path is complete and passing; future work is broader regression/performance coverage.
 6. **Update checkpoint** after each meaningful action — don't lose context.
+
+## Session Update (March 27, 2026)
+
+### End-to-End Validation Complete
+
+- Full smoke test run completed and passing.
+- `POST /api/ingest` succeeded with embedding-backed indexing.
+- `POST /api/ask` happy path succeeded with grounded answer and citations.
+- `POST /api/ask` refusal path succeeded for out-of-scope question.
+- Result: project is now feature-complete from a functional RAG perspective.
