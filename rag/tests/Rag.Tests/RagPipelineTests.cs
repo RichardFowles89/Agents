@@ -19,9 +19,10 @@ public class RagPipelineTests
         {
             new Citation("doc-1", "Guide", "Intro", null)
         }));
+        FakeQueryRewriteAgent rewriter = new(question => question);
         FakeSafetyReviewer safety = new(new SafetyReviewResult(true, "ok"));
 
-        RagPipeline pipeline = new(retriever, planner, answerer, safety);
+        RagPipeline pipeline = new(retriever, rewriter, planner, answerer, safety);
         AskResponse response = await pipeline.AskAsync(new AskRequest("What is this?", 3));
 
         Assert.True(response.Answered);
@@ -36,9 +37,10 @@ public class RagPipelineTests
         FakeRetriever retriever = new([]);
         FakePlanner planner = new(PlannerDecision.Refuse);
         FakeAnswerAgent answerer = new(new AnswerDraft("Should not run", []));
+        FakeQueryRewriteAgent rewriter = new(question => question);
         FakeSafetyReviewer safety = new(new SafetyReviewResult(true, "ok"));
 
-        RagPipeline pipeline = new(retriever, planner, answerer, safety);
+        RagPipeline pipeline = new(retriever, rewriter, planner, answerer, safety);
         AskResponse response = await pipeline.AskAsync(new AskRequest("Unsafe question", 3));
 
         Assert.False(response.Answered);
@@ -56,9 +58,10 @@ public class RagPipelineTests
         });
         FakePlanner planner = new(PlannerDecision.Answerable);
         FakeAnswerAgent answerer = new(new AnswerDraft("Draft", []));
+        FakeQueryRewriteAgent rewriter = new(question => question);
         FakeSafetyReviewer safety = new(new SafetyReviewResult(false, "Missing citations"));
 
-        RagPipeline pipeline = new(retriever, planner, answerer, safety);
+        RagPipeline pipeline = new(retriever, rewriter, planner, answerer, safety);
         AskResponse response = await pipeline.AskAsync(new AskRequest("Question", 3));
 
         Assert.False(response.Answered);
@@ -116,6 +119,25 @@ public class RagPipelineTests
         {
             CallCount++;
             return Task.FromResult(_draft);
+        }
+    }
+
+    private sealed class FakeQueryRewriteAgent : IQueryRewriteAgent
+    {
+        private readonly Func<string, string> _rewrite;
+
+        public FakeQueryRewriteAgent(Func<string, string> rewrite)
+        {
+            _rewrite = rewrite;
+        }
+
+        public Task<string> RewriteForRetrievalAsync(
+            string question,
+            PlannerDecision plannerDecision,
+            IReadOnlyList<RetrievalHit> retrievalHits,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_rewrite(question));
         }
     }
 

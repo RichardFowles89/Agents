@@ -2,7 +2,7 @@
 
 Date: March 27, 2026
 Status: Feature-complete RAG solution validated end-to-end. Ingest, hybrid retrieval, planning, answering, and safety review all working.
-Next Step: Agent-RAG learning track Day 1 - build eval runner/telemetry on top of baseline question set
+Next Step: Validate Agentic RAG v1 retry behavior via smoke tests, then add reranking stack
 
 ## Session Continuity Rule (Permanent)
 
@@ -23,6 +23,7 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 - Ingestion works and newly ingested content is retrievable in subsequent ask calls.
 - Planner, answer, and safety reviewer are wired to Azure OpenAI implementations.
 - Vector/hybrid retrieval implementation is complete and smoke-validated.
+- Agentic RAG v1 retry orchestration is implemented in pipeline (query rewrite + one re-retrieval attempt).
 - Unit tests were previously green for RagPipelineTests (5 passing at last checkpoint verification).
 
 ---
@@ -79,6 +80,7 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 
 - AzureWebJobsStorage reports unhealthy when unset locally; HTTP endpoints still function.
 - Ingested data persists in Azure AI Search with embeddings — survives host restarts.
+- Agentic retry path is build/test validated but not yet smoke-validated through live `/api/ask` calls.
 - Comprehensive test suite is not complete yet (additional branch/error/concurrency coverage needed).
 
 ---
@@ -156,11 +158,14 @@ Content-Type: application/json
 ## Next Work Queue
 
 1. **Immediate Learning Track Tasks:**
-  - Build a baseline eval runner that executes the fixed question set and reports answer/refusal accuracy and latency.
-  - Add per-stage telemetry to `/api/ask` for retrieval, planner, answer, and safety timings.
-  - Capture baseline metrics before adding agentic retrieval loops or rerankers.
+  - Smoke test Agentic RAG v1 retry path with paraphrased in-scope and out-of-scope questions.
+  - Confirm retry triggers only when planner declines initial retrieval.
+  - Capture before/after examples showing retry rescued answerability (if applicable).
 
-2. **Optional Post-Completion Hardening:**
+2. **Next Advanced Capability:**
+  - Add reranking stack (candidate retrieval -> rerank -> final context for generation).
+
+3. **Optional Post-Completion Hardening:**
    - Comprehensive tests (pipeline branch coverage, error paths)
    - Performance testing and tuning
    - Cloud deployment setup
@@ -176,6 +181,20 @@ Content-Type: application/json
   - `out_of_scope` (4)
 - Each item includes `id`, `question`, `expected` (`answer` or `refuse`), and `category`.
 - Purpose: establish an objective benchmark before implementing agentic retrieval loops and reranking stacks.
+
+### Agentic RAG v1 Implementation
+
+- Added `IQueryRewriteAgent` contract in `rag/src/Rag.Core/Contracts/IQueryRewriteAgent.cs`.
+- Added `AzureOpenAIQueryRewriteAgent` implementation in `rag/src/FunctionsApp/Agents/AzureOpenAIQueryRewriteAgent.cs`.
+- Updated DI registration in `rag/src/FunctionsApp/Program.cs` for `IQueryRewriteAgent`.
+- Updated `rag/src/Rag.Core/Pipeline/RagPipeline.cs` to perform one retry when planner initially refuses or requests more context:
+  - Assess initial retrieval
+  - Rewrite query for retrieval
+  - Re-retrieve once and re-assess
+  - Continue to answer/safety only when decision is `Answerable`
+- Validation:
+  - `dotnet build rag/RagAssistant.sln` succeeded
+  - `RagPipelineTests` pass (`3/3`)
 
 ---
 
