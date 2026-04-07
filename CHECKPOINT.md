@@ -511,18 +511,42 @@ When resuming:
 - Add MCP server package references and a minimal host startup that can run locally.
 - Keep behavior minimal and build-verified before adding `ask`/`ingest`/`health` tools.
 
-## Session Update (March 27, 2026 - End of Session Handoff)
+## Session Update (April 7, 2026 - MCP Local Server Complete)
 
-### Confirmed First Task For Next Session
+### MCP Local Server Implementation - COMPLETE ✅
 
-- Start Functions host locally.
-- Call endpoints in order:
-  - `GET /api/health`
-  - `POST /api/ingest`
-  - `POST /api/ask`
-- Step through the live request flow in debug mode to refresh current architecture and control flow:
-  - AskFunction -> RagPipeline.AskAsync -> RetrieveAndAssessAsync -> Query rewrite retry loop (if triggered) -> GenerateReviewedResponseAsync -> safety review -> HTTP response
-- After refresher walkthrough, decide whether to begin Batch 2 enhancement (clarification agent preferred, decomposition as alternative).
+- Created standalone MCP server project: `rag/src/Rag.McpServer/`
+- Implemented three MCP tools:
+  1. `health_check` - basic health endpoint
+  2. `ask_question` - calls existing `/api/ask` endpoint via HTTP
+  3. (Ingest tool pending for next session)
+- Fixed serialization bug in MCP ask tool:
+  - Issue: `PostAsJsonAsync` with `PropertyNamingPolicy.CamelCase` was not serializing `AskRequest` correctly
+  - Root cause: MCP tool was sending empty request body to Functions endpoint
+  - Solution: Explicit `JsonSerializer.Serialize` with proper options, then `StringContent` wrapper
+- Debugged end-to-end with Visual Studio breakpoints and console logging
+- Validated:
+  - MCP Inspector connects cleanly to local stdio MCP server
+  - Tools are discovered
+  - `ask_question` calls Functions endpoint correctly
+  - Response parsing works
+
+### Known Status
+
+- ✅ MCP server builds and runs
+- ✅ Inspector connects via stdio transport
+- ✅ ask_question tool works (sends serialized JSON, gets AskResponse back)
+- ⏳ ingest_documents tool needs implementation (next small increment)
+
+### Immediate Next Session Plan
+
+**IMPORTANT: Start session by explaining MCP Inspector to the user** - how it works, what stdin/stdout means, why serialization matters for MCP protocol, and how to debug MCP tools.
+
+Then continue with:
+1. Implement `ingest_documents` MCP tool (same pattern as ask_question)
+2. Test full MCP tool surface (health, ask_question, ingest_documents)
+3. Validate all three tools against baseline question set
+4. Mark MCP v1 complete and checkpoint final state
 
 ## Session Update (April 7, 2026 - MCP Incremental Build)
 
