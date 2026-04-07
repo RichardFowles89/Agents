@@ -484,6 +484,19 @@ When resuming:
 - `POST /api/ask` refusal path succeeded for out-of-scope question.
 - Result: project is now feature-complete from a functional RAG perspective.
 
+## Session Update (April 7, 2026 - MCP Incremental Buildout)
+
+### Step 3 Complete: First MCP Tool (health_check)
+
+- Added first MCP tool class at `rag/src/Rag.McpServer/Tools/HealthTools.cs`.
+- Registered tools in MCP host startup at `rag/src/Rag.McpServer/Program.cs` using `.WithTools<HealthTools>()`.
+- Tool implemented: `health_check` (returns status/service/timestamp payload).
+- Validation: `dotnet build rag/src/Rag.McpServer/Rag.McpServer.csproj` succeeded.
+
+### Next Incremental Step
+
+- Add exactly one more MCP tool: `ask_question`, wired to existing `IRagPipeline` so behavior matches current `/api/ask` endpoint.
+
 ## Session Update (April 7, 2026)
 
 ### MCP Local Server - Step 1 (Scaffold Only)
