@@ -590,3 +590,24 @@ When resuming:
 ### Next Immediate Step
 
 - Add one tiny MCP tool first (`health_check`) and validate round-trip before wiring `ask` and `ingest`.
+
+## Session Update (April 7, 2026 - MCP Incremental Build Step 3)
+
+- Added first business MCP tool: `ask_question` in `rag/src/Rag.McpServer/Tools/AskTools.cs`.
+- Tool implementation is intentionally minimal/safe: forwards to existing Functions endpoint `POST /api/ask`.
+- Registered `AskTools` and `AddHttpClient()` in `rag/src/Rag.McpServer/Program.cs`.
+- Added shared model reference in `rag/src/Rag.McpServer/Rag.McpServer.csproj`:
+  - Project reference to `rag/src/Rag.Core/Rag.Core.csproj`
+- Added missing package in `rag/src/Rag.McpServer/Rag.McpServer.csproj`:
+  - `Microsoft.Extensions.Http` version `9.0.10` (for `IHttpClientFactory`)
+- Config note:
+  - Optional env var `RAG_FUNCTIONS_ASK_ENDPOINT`
+  - Default value used by tool: `http://localhost:7071/api/ask`
+
+### Validation
+
+- `dotnet build rag/src/Rag.McpServer/Rag.McpServer.csproj` succeeded after dependency fix.
+
+### Next Immediate Step
+
+- Run and validate `ask_question` via MCP client, then add `ingest_documents` as the next small incremental tool.
