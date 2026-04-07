@@ -27,6 +27,12 @@ public sealed class AskFunction
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "ask")] HttpRequestData req,
         CancellationToken cancellationToken)
     {
+        // Debug: log raw request body
+        //using var reader = new StreamReader(req.Body);
+        //string rawBody = await reader.ReadToEndAsync();
+        //System.Diagnostics.Debug.WriteLine($"[AskFunction] Received raw body: {rawBody}");
+        //req.Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(rawBody));
+
         AskRequest? request = await JsonSerializer.DeserializeAsync<AskRequest>(
             req.Body, JsonOptions, cancellationToken);
 
