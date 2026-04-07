@@ -1,2 +1,11 @@
-﻿Console.WriteLine("Rag.McpServer starting...");
-Console.WriteLine("MCP package installed. Tool registration will be added in the next step.");
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+
+builder.Services
+	.AddMcpServer()
+	.WithStdioServerTransport();
+
+IHost host = builder.Build();
+await host.RunAsync();

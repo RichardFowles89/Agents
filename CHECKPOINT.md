@@ -561,3 +561,19 @@ When resuming:
   - `POST /api/ingest`
   - `POST /api/ask`
 - Confirm out-of-scope refusal behavior remains unchanged with reranking enabled.
+
+## Session Update (April 7, 2026 - MCP Incremental Build Step 2)
+
+- Updated `rag/src/Rag.McpServer/Program.cs` to a minimal real MCP host startup using Generic Host + stdio transport:
+  - `AddMcpServer()`
+  - `WithStdioServerTransport()`
+- Added missing host package dependency in `rag/src/Rag.McpServer/Rag.McpServer.csproj`:
+  - `Microsoft.Extensions.Hosting` version `9.0.10`
+- Added missing namespace import in `Program.cs` for DI extension methods:
+  - `using Microsoft.Extensions.DependencyInjection;`
+- Validation:
+  - `dotnet build rag/src/Rag.McpServer/Rag.McpServer.csproj` succeeded after fixes.
+
+### Next Immediate Step
+
+- Add one tiny MCP tool first (`health_check`) and validate round-trip before wiring `ask` and `ingest`.
