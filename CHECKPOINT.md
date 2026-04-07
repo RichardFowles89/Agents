@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
-Date: March 27, 2026
-Status: **Strong Agent RAG v1 Complete**. Full end-to-end validated: ingest, hybrid retrieval, planning, answering, safety review, and agentic retry orchestration all working.
-Next Step (Immediate Next Session): Run the app, call `/api/health` + `/api/ingest` + `/api/ask`, and walk through code paths in debug mode as a refresher.
+Date: April 7, 2026
+Status: **Strong Agent RAG v1 + Reranking Integration Complete (Code + Tests + Build)**. Candidate retrieval now supports reranking with fail-open fallback.
+Next Step (Immediate): Run endpoint smoke tests with reranking path (`/api/health`, `/api/ingest`, `/api/ask`) and inspect diagnostics in live responses.
 
 ## Session Continuity Rule (Permanent)
 
@@ -496,3 +496,45 @@ When resuming:
 - Step through the live request flow in debug mode to refresh current architecture and control flow:
   - AskFunction -> RagPipeline.AskAsync -> RetrieveAndAssessAsync -> Query rewrite retry loop (if triggered) -> GenerateReviewedResponseAsync -> safety review -> HTTP response
 - After refresher walkthrough, decide whether to begin Batch 2 enhancement (clarification agent preferred, decomposition as alternative).
+
+## Session Update (April 7, 2026)
+
+### Reranking Implementation Started and Integrated
+
+- Decision: clarification-agent path moved to **nice-to-have/deferred** due time constraints.
+- Implemented reranking contract:
+  - `rag/src/Rag.Core/Contracts/IRetrievalReranker.cs`
+- Implemented Azure OpenAI reranker:
+  - `rag/src/FunctionsApp/Agents/AzureOpenAIRetrievalReranker.cs`
+  - Prompt asks model to return ordered candidate indexes only.
+  - Response parsing validates bounds, uniqueness, and max result count.
+  - Safe fallback to retrieval ordering when parsing fails.
+- Updated pipeline integration:
+  - `rag/src/Rag.Core/Pipeline/RagPipeline.cs`
+  - Retrieves broad candidate set (`candidateTop = max(top, 50)`).
+  - Applies reranking before planner assessment.
+  - Uses fail-open fallback (`candidateHits.Take(top)`) if reranker errors.
+- Updated diagnostics model:
+  - `rag/src/Rag.Core/Models/AskAttemptTrace.cs`
+  - Added `RerankedHitCount` and `RerankApplied`.
+- Updated DI wiring:
+  - `rag/src/FunctionsApp/Program.cs`
+  - Registered `IRetrievalReranker -> AzureOpenAIRetrievalReranker`.
+- Updated tests:
+  - `rag/tests/Rag.Tests/RagPipelineTests.cs`
+  - Constructor updates for new reranker dependency.
+  - Added test: reranking applied when candidate pool > top.
+  - Added test: reranker failure falls back safely.
+
+### Validation (April 7, 2026)
+
+- `dotnet build rag/RagAssistant.sln` succeeded.
+- `RagPipelineTests` passed (`6/6`).
+
+### Next Immediate Validation Task
+
+- Run live host smoke calls and verify diagnostics include rerank metadata:
+  - `GET /api/health`
+  - `POST /api/ingest`
+  - `POST /api/ask`
+- Confirm out-of-scope refusal behavior remains unchanged with reranking enabled.

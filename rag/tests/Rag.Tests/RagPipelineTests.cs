@@ -19,10 +19,11 @@ public class RagPipelineTests
         {
             new Citation("doc-1", "Guide", "Intro", null)
         }));
+        FakeReranker reranker = new();
         FakeQueryRewriteAgent rewriter = new(question => question);
         FakeSafetyReviewer safety = new(new SafetyReviewResult(true, "ok"));
 
-        RagPipeline pipeline = new(retriever, rewriter, planner, answerer, safety);
+        RagPipeline pipeline = new(retriever, reranker, rewriter, planner, answerer, safety);
         AskResponse response = await pipeline.AskAsync(new AskRequest("What is this?", 3));
 
         Assert.True(response.Answered);
@@ -37,10 +38,11 @@ public class RagPipelineTests
         FakeRetriever retriever = new([]);
         FakePlanner planner = new(PlannerDecision.Refuse);
         FakeAnswerAgent answerer = new(new AnswerDraft("Should not run", []));
+        FakeReranker reranker = new();
         FakeQueryRewriteAgent rewriter = new(question => "rewritten query");
         FakeSafetyReviewer safety = new(new SafetyReviewResult(true, "ok"));
 
-        RagPipeline pipeline = new(retriever, rewriter, planner, answerer, safety);
+        RagPipeline pipeline = new(retriever, reranker, rewriter, planner, answerer, safety);
         AskResponse response = await pipeline.AskAsync(new AskRequest("Unsafe question", 3));
 
         Assert.False(response.Answered);
@@ -62,10 +64,11 @@ public class RagPipelineTests
         });
         FakePlanner planner = new(PlannerDecision.Answerable);
         FakeAnswerAgent answerer = new(new AnswerDraft("Draft", []));
+        FakeReranker reranker = new();
         FakeQueryRewriteAgent rewriter = new(question => question);
         FakeSafetyReviewer safety = new(new SafetyReviewResult(false, "Missing citations"));
 
-        RagPipeline pipeline = new(retriever, rewriter, planner, answerer, safety);
+        RagPipeline pipeline = new(retriever, reranker, rewriter, planner, answerer, safety);
         AskResponse response = await pipeline.AskAsync(new AskRequest("Question", 3));
 
         Assert.False(response.Answered);
@@ -82,11 +85,12 @@ public class RagPipelineTests
         FakeRetriever retriever = new([]);
         FakePlanner planner = new(PlannerDecision.Refuse);
         FakeAnswerAgent answerer = new(new AnswerDraft("Should not run", []));
+        FakeReranker reranker = new();
         int rewriteCount = 0;
         FakeQueryRewriteAgent rewriter = new(_ => $"rewrite-{++rewriteCount}");
         FakeSafetyReviewer safety = new(new SafetyReviewResult(true, "ok"));
 
-        RagPipeline pipeline = new(retriever, rewriter, planner, answerer, safety);
+        RagPipeline pipeline = new(retriever, reranker, rewriter, planner, answerer, safety);
         AskResponse response = await pipeline.AskAsync(new AskRequest("Question", Top: 3, MaxAgentRetries: 2));
 
         Assert.False(response.Answered);
@@ -94,6 +98,68 @@ public class RagPipelineTests
         Assert.Equal(3, response.Diagnostics.AttemptsUsed);
         Assert.Equal(2, response.Diagnostics.MaxRetries);
         Assert.True(response.Diagnostics.RetryTriggered);
+    }
+
+    [Fact]
+    public async Task AskAsync_AppliesReranking_WhenCandidatesExceedTop()
+    {
+        FakeRetriever retriever = new(new[]
+        {
+            new RetrievalHit("c1", "doc-1", "Guide", "Intro", "Context A", null, 0.9),
+            new RetrievalHit("c2", "doc-2", "Guide", "Intro", "Context B", null, 0.8),
+            new RetrievalHit("c3", "doc-3", "Guide", "Intro", "Context C", null, 0.7),
+            new RetrievalHit("c4", "doc-4", "Guide", "Intro", "Context D", null, 0.6),
+            new RetrievalHit("c5", "doc-5", "Guide", "Intro", "Context E", null, 0.5),
+            new RetrievalHit("c6", "doc-6", "Guide", "Intro", "Context F", null, 0.4)
+        });
+        FakeReranker reranker = new(
+            (question, candidates, top) =>
+                Task.FromResult<IReadOnlyList<RetrievalHit>>([candidates[4], candidates[2], candidates[0]]));
+        FakePlanner planner = new(PlannerDecision.Answerable);
+        FakeAnswerAgent answerer = new(new AnswerDraft("Answer", []));
+        FakeQueryRewriteAgent rewriter = new(question => question);
+        FakeSafetyReviewer safety = new(new SafetyReviewResult(true, "ok"));
+
+        RagPipeline pipeline = new(retriever, reranker, rewriter, planner, answerer, safety);
+        AskResponse response = await pipeline.AskAsync(new AskRequest("Question", Top: 3, MaxAgentRetries: 0));
+
+        Assert.True(response.Answered);
+        Assert.NotNull(response.Diagnostics);
+        AskAttemptTrace attempt = Assert.Single(response.Diagnostics.Attempts);
+        Assert.Equal(6, attempt.HitCount);
+        Assert.Equal(3, attempt.RerankedHitCount);
+        Assert.True(attempt.RerankApplied);
+        Assert.Equal(1, reranker.CallCount);
+    }
+
+    [Fact]
+    public async Task AskAsync_FallsBack_WhenRerankerThrows()
+    {
+        FakeRetriever retriever = new(new[]
+        {
+            new RetrievalHit("c1", "doc-1", "Guide", "Intro", "Context A", null, 0.9),
+            new RetrievalHit("c2", "doc-2", "Guide", "Intro", "Context B", null, 0.8),
+            new RetrievalHit("c3", "doc-3", "Guide", "Intro", "Context C", null, 0.7),
+            new RetrievalHit("c4", "doc-4", "Guide", "Intro", "Context D", null, 0.6),
+            new RetrievalHit("c5", "doc-5", "Guide", "Intro", "Context E", null, 0.5),
+            new RetrievalHit("c6", "doc-6", "Guide", "Intro", "Context F", null, 0.4)
+        });
+        FakeReranker reranker = new((_, _, _) => throw new InvalidOperationException("rerank failed"));
+        FakePlanner planner = new(PlannerDecision.Answerable);
+        FakeAnswerAgent answerer = new(new AnswerDraft("Answer", []));
+        FakeQueryRewriteAgent rewriter = new(question => question);
+        FakeSafetyReviewer safety = new(new SafetyReviewResult(true, "ok"));
+
+        RagPipeline pipeline = new(retriever, reranker, rewriter, planner, answerer, safety);
+        AskResponse response = await pipeline.AskAsync(new AskRequest("Question", Top: 3, MaxAgentRetries: 0));
+
+        Assert.True(response.Answered);
+        Assert.NotNull(response.Diagnostics);
+        AskAttemptTrace attempt = Assert.Single(response.Diagnostics.Attempts);
+        Assert.Equal(6, attempt.HitCount);
+        Assert.Equal(3, attempt.RerankedHitCount);
+        Assert.True(attempt.RerankApplied);
+        Assert.Equal(1, reranker.CallCount);
     }
 
     private sealed class FakeRetriever : ISearchRetriever
@@ -128,6 +194,33 @@ public class RagPipelineTests
         public Task<PlannerDecision> AssessAsync(string question, IReadOnlyList<RetrievalHit> retrievalHits, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_decision);
+        }
+    }
+
+    private sealed class FakeReranker : IRetrievalReranker
+    {
+        private readonly Func<string, IReadOnlyList<RetrievalHit>, int, Task<IReadOnlyList<RetrievalHit>>> _rerank;
+
+        public int CallCount { get; private set; }
+
+        public FakeReranker()
+            : this((_, candidates, top) => Task.FromResult(candidates.Take(top).ToList() as IReadOnlyList<RetrievalHit>))
+        {
+        }
+
+        public FakeReranker(Func<string, IReadOnlyList<RetrievalHit>, int, Task<IReadOnlyList<RetrievalHit>>> rerank)
+        {
+            _rerank = rerank;
+        }
+
+        public Task<IReadOnlyList<RetrievalHit>> RerankAsync(
+            string question,
+            IReadOnlyList<RetrievalHit> candidates,
+            int top,
+            CancellationToken cancellationToken = default)
+        {
+            CallCount++;
+            return _rerank(question, candidates, top);
         }
     }
 

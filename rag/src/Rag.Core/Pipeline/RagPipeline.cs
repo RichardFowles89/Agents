@@ -8,6 +8,7 @@ public sealed class RagPipeline : IRagPipeline
     private const int MaxSupportedAgentRetries = 3;
 
     private readonly ISearchRetriever _retriever;
+    private readonly IRetrievalReranker _reranker;
     private readonly IQueryRewriteAgent _queryRewriteAgent;
     private readonly IPlannerAgent _planner;
     private readonly IAnswerAgent _answerAgent;
@@ -15,12 +16,14 @@ public sealed class RagPipeline : IRagPipeline
 
     public RagPipeline(
         ISearchRetriever retriever,
+        IRetrievalReranker reranker,
         IQueryRewriteAgent queryRewriteAgent,
         IPlannerAgent planner,
         IAnswerAgent answerAgent,
         ISafetyReviewerAgent safetyReviewer)
     {
         _retriever = retriever;
+        _reranker = reranker;
         _queryRewriteAgent = queryRewriteAgent;
         _planner = planner;
         _answerAgent = answerAgent;
@@ -42,13 +45,16 @@ public sealed class RagPipeline : IRagPipeline
         bool hasPreviousHits = false;
         IReadOnlyList<RetrievalHit> previousHits = [];
 
-        (IReadOnlyList<RetrievalHit> hits, PlannerDecision decision) = ([], PlannerDecision.Refuse);
+        int candidateTop = Math.Max(request.Top, 50);
+        (IReadOnlyList<RetrievalHit> hits, PlannerDecision decision, int candidateHitCount, bool rerankApplied) =
+            ([], PlannerDecision.Refuse, 0, false);
 
         for (int attempt = 0; attempt <= maxRetries; attempt++)
         {
-            (hits, decision) = await RetrieveAndAssessAsync(
+            (hits, decision, candidateHitCount, rerankApplied) = await RetrieveAndAssessAsync(
                 request.Question,
                 retrievalQuery,
+                candidateTop,
                 request.Top,
                 cancellationToken);
 
@@ -57,7 +63,9 @@ public sealed class RagPipeline : IRagPipeline
             attemptTraces.Add(new AskAttemptTrace(
                 attempt + 1,
                 retrievalQuery,
+                candidateHitCount,
                 hits.Count,
+                rerankApplied,
                 decision,
                 QueryRewritten: attempt > 0,
                 RetrievalImproved: retrievalImproved));
@@ -106,15 +114,60 @@ public sealed class RagPipeline : IRagPipeline
         return await GenerateReviewedResponseAsync(request.Question, hits, diagnostics, cancellationToken);
     }
 
-    private async Task<(IReadOnlyList<RetrievalHit> Hits, PlannerDecision Decision)> RetrieveAndAssessAsync(
+    private async Task<(IReadOnlyList<RetrievalHit> Hits, PlannerDecision Decision, int CandidateHitCount, bool RerankApplied)> RetrieveAndAssessAsync(
         string question,
         string retrievalQuery,
+        int candidateTop,
         int top,
         CancellationToken cancellationToken)
     {
-        IReadOnlyList<RetrievalHit> hits = await _retriever.RetrieveAsync(retrievalQuery, top, cancellationToken);
-        PlannerDecision decision = await _planner.AssessAsync(question, hits, cancellationToken);
-        return (hits, decision);
+        IReadOnlyList<RetrievalHit> candidateHits = await _retriever.RetrieveAsync(retrievalQuery, candidateTop, cancellationToken);
+        IReadOnlyList<RetrievalHit> hitsForPlanning = await RerankWithFallbackAsync(
+            question,
+            candidateHits,
+            top,
+            cancellationToken);
+
+        PlannerDecision decision = await _planner.AssessAsync(question, hitsForPlanning, cancellationToken);
+        bool rerankApplied = candidateHits.Count > top;
+        return (hitsForPlanning, decision, candidateHits.Count, rerankApplied);
+    }
+
+    private async Task<IReadOnlyList<RetrievalHit>> RerankWithFallbackAsync(
+        string question,
+        IReadOnlyList<RetrievalHit> candidateHits,
+        int top,
+        CancellationToken cancellationToken)
+    {
+        if (candidateHits.Count == 0 || top <= 0)
+        {
+            return [];
+        }
+
+        if (candidateHits.Count <= top)
+        {
+            return candidateHits;
+        }
+
+        try
+        {
+            IReadOnlyList<RetrievalHit> reranked = await _reranker.RerankAsync(
+                question,
+                candidateHits,
+                top,
+                cancellationToken);
+
+            if (reranked.Count > 0)
+            {
+                return reranked;
+            }
+        }
+        catch
+        {
+            // Fail open: preserve service availability by falling back to retrieval order.
+        }
+
+        return candidateHits.Take(top).ToList();
     }
 
     private async Task<AskResponse> GenerateReviewedResponseAsync(

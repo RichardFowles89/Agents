@@ -78,6 +78,7 @@ var host = new HostBuilder()
                 provider.GetRequiredService<IEmbeddingService>()));
         services.AddSingleton<ISearchIndexer, AzureSearchIndexer>();
         services.AddSingleton<IDocumentChunker, DocumentChunker>();
+        services.AddSingleton<IRetrievalReranker, AzureOpenAIRetrievalReranker>();
         services.AddSingleton<IQueryRewriteAgent, AzureOpenAIQueryRewriteAgent>();
         services.AddSingleton<IPlannerAgent, AzureOpenAIPlannerAgent>();
         services.AddSingleton<IAnswerAgent, AzureOpenAIAnswerAgent>();
