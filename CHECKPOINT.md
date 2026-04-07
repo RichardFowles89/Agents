@@ -484,6 +484,20 @@ When resuming:
 - `POST /api/ask` refusal path succeeded for out-of-scope question.
 - Result: project is now feature-complete from a functional RAG perspective.
 
+## Session Update (April 7, 2026)
+
+### MCP Local Server - Step 1 (Scaffold Only)
+
+- Created new project: `rag/src/Rag.McpServer/Rag.McpServer.csproj` (net10.0 console app).
+- Added project to solution: `rag/RagAssistant.sln`.
+- Validation: `dotnet build rag/src/Rag.McpServer/Rag.McpServer.csproj` succeeded.
+- Scope intentionally limited for incremental testing: no MCP protocol package/tool wiring yet.
+
+### Next Immediate Step
+
+- Add MCP server package references and a minimal host startup that can run locally.
+- Keep behavior minimal and build-verified before adding `ask`/`ingest`/`health` tools.
+
 ## Session Update (March 27, 2026 - End of Session Handoff)
 
 ### Confirmed First Task For Next Session
