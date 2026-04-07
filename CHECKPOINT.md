@@ -511,6 +511,15 @@ When resuming:
   - AskFunction -> RagPipeline.AskAsync -> RetrieveAndAssessAsync -> Query rewrite retry loop (if triggered) -> GenerateReviewedResponseAsync -> safety review -> HTTP response
 - After refresher walkthrough, decide whether to begin Batch 2 enhancement (clarification agent preferred, decomposition as alternative).
 
+## Session Update (April 7, 2026 - MCP Incremental Build)
+
+- Created new local MCP host scaffold project: `rag/src/Rag.McpServer/Rag.McpServer.csproj`.
+- Added project to solution (`rag/RagAssistant.sln`).
+- Added initial MCP package reference: `ModelContextProtocol` version `1.2.0`.
+- Replaced template hello-world with minimal startup shell output in `rag/src/Rag.McpServer/Program.cs`.
+- Validation: `dotnet build rag/src/Rag.McpServer/Rag.McpServer.csproj` succeeded.
+- Next incremental step: wire minimal MCP host startup (no business tools yet) and re-validate build/run.
+
 ## Session Update (April 7, 2026)
 
 ### Reranking Implementation Started and Integrated
