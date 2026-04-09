@@ -10,7 +10,8 @@ builder.Services
 	.AddMcpServer()
 	.WithStdioServerTransport()
 	.WithTools<HealthTools>()
-	.WithTools<AskTools>();
+	.WithTools<AskTools>()
+	.WithTools<IngestTools>();
 
 IHost host = builder.Build();
 await host.RunAsync();

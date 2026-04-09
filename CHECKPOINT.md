@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
 Date: April 9, 2026
-Status: **Strong Agent RAG v1 + Reranking + Local MCP (health_check + ask_question) working**. MCP Inspector now connects via stdio and ask flow succeeds after serialization fix.
-Next Step (Immediate): Continue APM rollout by wiring automated package checks in CI and then completing the third MCP tool (`ingest_documents`) for MCP package v0.1 completeness.
+Status: **Strong Agent RAG v1 + Reranking + Local MCP (health_check + ask_question + ingest_documents implemented)**. MCP Inspector connects via stdio and ask flow succeeds after serialization fix.
+Next Step (Immediate): Validate `ingest_documents` in MCP Inspector, then mark local MCP v1 package as `validated` and continue APM CI automation.
 
 ## Session Continuity Rule (Permanent)
 
@@ -29,6 +29,7 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 - Local MCP server project exists and runs via stdio transport.
 - MCP Inspector successfully discovers and runs `health_check` and `ask_question`.
 - MCP `ask_question` serialization bug has been fixed and validated through Inspector calls.
+- MCP `ingest_documents` tool has been implemented and registered; pending Inspector validation.
 
 ---
 
@@ -56,7 +57,8 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 - ✅ Local MCP host runs successfully.
 - ✅ `health_check` works via Inspector.
 - ✅ `ask_question` works via Inspector.
-- ⏳ `ingest_documents` tool remains to implement.
+- ✅ `ingest_documents` tool implemented and registered.
+- ⏳ `ingest_documents` Inspector call validation pending.
 
 ### Next Session Start Requirement
 
@@ -68,13 +70,12 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 
 ### Immediate Next Implementation Step
 
-1. Implement `ingest_documents` MCP tool in `rag/src/Rag.McpServer/Tools`.
-2. Register tool in `rag/src/Rag.McpServer/Program.cs`.
-3. Validate all MCP tools in Inspector:
+1. Validate all MCP tools in Inspector:
    - `health_check`
    - `ask_question`
    - `ingest_documents`
-4. Mark local MCP v1 complete in checkpoint.
+2. Mark local MCP v1 complete in checkpoint.
+3. Continue APM rollout by wiring manifest validation into CI.
 
 ---
 
@@ -88,17 +89,32 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 - Current manifest includes active MCP tools:
   - `health_check`
   - `ask_question`
+  - `ingest_documents`
 
 ### Validation
 
 - Ran local validator:
   - `rag/apm/Validate-ApmManifest.ps1`
   - Result: pass
+- Built MCP server after ingest tool changes:
+  - `dotnet build rag/src/Rag.McpServer/Rag.McpServer.csproj`
+  - Result: pass
+
+### Session Update (April 9, 2026 - MCP Ingest Tool Implementation)
+
+- Added `ingest_documents` MCP tool: `rag/src/Rag.McpServer/Tools/IngestTools.cs`
+  - Defensive request/response serialization
+  - Supports both `sourceId` and `id`
+  - Returns structured ingest result metadata
+- Registered ingest tool in startup: `rag/src/Rag.McpServer/Program.cs`
+- Updated APM manifest: `rag/apm/package.manifest.json`
+  - Added `ingest_documents` tool schema
+  - Added `RAG_FUNCTIONS_INGEST_ENDPOINT` as required environment variable
 
 ### Next APM Increment
 
 1. Add CI task to run `Validate-ApmManifest.ps1` on PR/build.
-2. Add `ingest_documents` MCP tool and update manifest tool catalog.
+2. Wire `Validate-ApmManifest.ps1` into CI on PR/build.
 3. Mark MCP local package `0.1.0` readiness once all three tools are validated in Inspector.
 
 ---
