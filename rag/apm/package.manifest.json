@@ -1,0 +1,75 @@
+{
+  "$schema": "./package.manifest.schema.json",
+  "package": {
+    "name": "rag-mcp-server",
+    "displayName": "RAG MCP Server",
+    "version": "0.1.0-draft",
+    "owner": "rag-team",
+    "description": "MCP tool package for enterprise RAG ask and health operations.",
+    "status": "draft"
+  },
+  "runtime": {
+    "transport": "stdio",
+    "entrypoint": "rag/src/Rag.McpServer/bin/Debug/net10.0/Rag.McpServer.exe",
+    "framework": "net10.0",
+    "mcpSdk": "ModelContextProtocol@1.2.0"
+  },
+  "compatibility": {
+    "mcpProtocol": "2025-03-26",
+    "breakingChangePolicy": "semantic-versioning"
+  },
+  "tools": [
+    {
+      "name": "health_check",
+      "status": "active",
+      "description": "Returns MCP server health and timestamp.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {}
+      }
+    },
+    {
+      "name": "ask_question",
+      "status": "active",
+      "description": "Asks the RAG endpoint and returns AskResponse with diagnostics.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["question"],
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1
+          },
+          "top": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 5
+          },
+          "maxAgentRetries": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3,
+            "default": 1
+          }
+        }
+      }
+    }
+  ],
+  "environment": {
+    "required": [
+      "RAG_FUNCTIONS_ASK_ENDPOINT"
+    ],
+    "optional": []
+  },
+  "operational": {
+    "requestTimeoutSeconds": 60,
+    "retryPolicy": "caller-controlled",
+    "observability": {
+      "logs": true,
+      "correlationId": "planned"
+    }
+  }
+}

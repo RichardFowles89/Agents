@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
-Date: April 7, 2026
-Status: **Strong Agent RAG v1 + Reranking Integration Complete (Code + Tests + Build)**. Candidate retrieval now supports reranking with fail-open fallback.
-Next Step (Immediate): Run endpoint smoke tests with reranking path (`/api/health`, `/api/ingest`, `/api/ask`) and inspect diagnostics in live responses.
+Date: April 9, 2026
+Status: **Strong Agent RAG v1 + Reranking + Local MCP (health_check + ask_question) working**. MCP Inspector now connects via stdio and ask flow succeeds after serialization fix.
+Next Step (Immediate): Continue APM rollout by wiring automated package checks in CI and then completing the third MCP tool (`ingest_documents`) for MCP package v0.1 completeness.
 
 ## Session Continuity Rule (Permanent)
 
@@ -26,6 +26,80 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 - Agentic RAG v1 retry orchestration is implemented in pipeline (query rewrite + one re-retrieval attempt).
 - Batch 1 strong-agentic controls implemented: configurable retry limit + attempt diagnostics metadata.
 - Unit tests were previously green for RagPipelineTests (5 passing at last checkpoint verification).
+- Local MCP server project exists and runs via stdio transport.
+- MCP Inspector successfully discovers and runs `health_check` and `ask_question`.
+- MCP `ask_question` serialization bug has been fixed and validated through Inspector calls.
+
+---
+
+## Session Update (April 9, 2026 - MCP Debugging and Stabilization)
+
+### What Was Completed
+
+- Confirmed local MCP wiring works with Inspector using stdio transport.
+- Confirmed tool discovery in Inspector:
+  - `health_check`
+  - `ask_question`
+- Diagnosed MCP ask failure where Functions endpoint received empty body.
+- Root cause: MCP-side JSON serialization/request content handling in ask tool.
+- Applied fix in `rag/src/Rag.McpServer/Tools/AskTools.cs`:
+  - explicit request serialization
+  - robust response handling for empty/non-JSON payloads
+  - improved debug visibility during request/response processing
+- Validated end-to-end:
+  - Inspector can invoke `ask_question`
+  - Function receives valid JSON body
+  - MCP tool returns parsed `AskResponse`
+
+### Current MCP State
+
+- ✅ Local MCP host runs successfully.
+- ✅ `health_check` works via Inspector.
+- ✅ `ask_question` works via Inspector.
+- ⏳ `ingest_documents` tool remains to implement.
+
+### Next Session Start Requirement
+
+- Start by explaining MCP Inspector clearly:
+  - how stdio transport works
+  - why stdout must contain only MCP protocol frames
+  - common Windows path/launch pitfalls
+  - practical debugging workflow (attach VS debugger + inspect raw request/response)
+
+### Immediate Next Implementation Step
+
+1. Implement `ingest_documents` MCP tool in `rag/src/Rag.McpServer/Tools`.
+2. Register tool in `rag/src/Rag.McpServer/Program.cs`.
+3. Validate all MCP tools in Inspector:
+   - `health_check`
+   - `ask_question`
+   - `ingest_documents`
+4. Mark local MCP v1 complete in checkpoint.
+
+---
+
+## Session Update (April 9, 2026 - APM Rollout Started)
+
+### APM Artifacts Added
+
+- Added initial APM package manifest: `rag/apm/package.manifest.json`
+- Added manifest schema contract: `rag/apm/package.manifest.schema.json`
+- Added local manifest validator script: `rag/apm/Validate-ApmManifest.ps1`
+- Current manifest includes active MCP tools:
+  - `health_check`
+  - `ask_question`
+
+### Validation
+
+- Ran local validator:
+  - `rag/apm/Validate-ApmManifest.ps1`
+  - Result: pass
+
+### Next APM Increment
+
+1. Add CI task to run `Validate-ApmManifest.ps1` on PR/build.
+2. Add `ingest_documents` MCP tool and update manifest tool catalog.
+3. Mark MCP local package `0.1.0` readiness once all three tools are validated in Inspector.
 
 ---
 
