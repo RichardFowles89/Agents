@@ -3,10 +3,10 @@
   "package": {
     "name": "rag-mcp-server",
     "displayName": "RAG MCP Server",
-    "version": "0.1.0-draft",
+    "version": "0.1.0",
     "owner": "rag-team",
     "description": "MCP tool package for enterprise RAG ask and health operations.",
-    "status": "draft"
+    "status": "validated"
   },
   "runtime": {
     "transport": "stdio",

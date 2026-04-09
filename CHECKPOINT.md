@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
 Date: April 9, 2026
-Status: **Strong Agent RAG v1 + Reranking + Local MCP (health_check + ask_question + ingest_documents implemented)**. MCP Inspector connects via stdio, ask/ingest flows work, and APM manifest validation is now enforced in CI.
-Next Step (Immediate): Mark local MCP v1 package as `validated`, then prepare first APM package release metadata/changelog.
+Status: **Strong Agent RAG v1 + Reranking + Local MCP v1 complete (health_check + ask_question + ingest_documents validated)**. APM package manifest is now `validated` at `0.1.0`, with schema validation enforced in CI.
+Next Step (Immediate): Implement APM publish workflow (artifact packaging + versioned release on tag) and onboard first internal consumer.
 
 ## Session Continuity Rule (Permanent)
 
@@ -119,9 +119,20 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 
 ### Next APM Increment
 
-1. Mark MCP local package `0.1.0` readiness once all three tools are validated in Inspector.
-2. Add first package release notes/changelog entry.
-3. Decide package status transition (`draft` -> `validated`) in `rag/apm/package.manifest.json`.
+1. Add release pipeline to publish APM package artifacts on tag.
+2. Add first internal consumer install instructions using package metadata.
+3. Add compatibility check in CI to guard accidental breaking contract changes.
+
+### Session Update (April 9, 2026 - APM v0.1 Validation)
+
+- Updated `rag/apm/package.manifest.json`:
+  - `package.version`: `0.1.0`
+  - `package.status`: `validated`
+- Added first package changelog at `rag/apm/CHANGELOG.md`.
+- Confirmed local MCP v1 toolset validated in Inspector:
+  - `health_check`
+  - `ask_question`
+  - `ingest_documents`
 
 ---
 
