@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
 Date: April 9, 2026
-Status: **Strong Agent RAG v1 + Reranking + Local MCP v1 complete (health_check + ask_question + ingest_documents validated)**. APM package manifest is now `validated` at `0.1.0`, with schema validation enforced in CI.
-Next Step (Immediate): Implement APM publish workflow (artifact packaging + versioned release on tag) and onboard first internal consumer.
+Status: **Strong Agent RAG v1 + Reranking + Local MCP v1 complete (health_check + ask_question + ingest_documents validated)**. APM package manifest is `validated` at `0.1.0`, CI manifest validation is enforced, and APM publish workflow is implemented.
+Next Step (Immediate): Trigger first tag-based APM release (`v0.1.0`) and onboard first internal consumer.
 
 ## Session Continuity Rule (Permanent)
 
@@ -57,8 +57,7 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 - ✅ Local MCP host runs successfully.
 - ✅ `health_check` works via Inspector.
 - ✅ `ask_question` works via Inspector.
-- ✅ `ingest_documents` tool implemented and registered.
-- ⏳ `ingest_documents` Inspector call validation pending.
+- ✅ `ingest_documents` tool implemented, registered, and validated via Inspector.
 
 ### Next Session Start Requirement
 
@@ -116,6 +115,19 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 - Updated APM manifest: `rag/apm/package.manifest.json`
   - Added `ingest_documents` tool schema
   - Added `RAG_FUNCTIONS_INGEST_ENDPOINT` as required environment variable
+
+## Session Update (April 9, 2026 - APM Publish Workflow)
+
+- Added dedicated publish workflow: `.github/workflows/apm-publish.yml`
+  - Triggers on tags (`v*`) and manual dispatch.
+  - Validates manifest before packaging.
+  - Verifies git tag matches manifest version.
+  - Publishes MCP server in Release mode.
+  - Assembles versioned APM package archive.
+  - Uploads build artifact and creates GitHub release on tag events.
+- Current release posture:
+  - Manifest version/status: `0.1.0` / `validated`
+  - Ready to cut first tagged release: `v0.1.0`
 
 ### Next APM Increment
 
