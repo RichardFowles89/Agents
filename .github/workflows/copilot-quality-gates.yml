@@ -21,6 +21,10 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Validate APM manifest
+        shell: pwsh
+        run: ./rag/apm/Validate-ApmManifest.ps1 -ManifestPath ./rag/apm/package.manifest.json
+
       - name: Restore
         run: dotnet restore 
 

@@ -1,8 +1,8 @@
 # RAG Learning Project Checkpoint
 
 Date: April 9, 2026
-Status: **Strong Agent RAG v1 + Reranking + Local MCP (health_check + ask_question + ingest_documents implemented)**. MCP Inspector connects via stdio and ask flow succeeds after serialization fix.
-Next Step (Immediate): Validate `ingest_documents` in MCP Inspector, then mark local MCP v1 package as `validated` and continue APM CI automation.
+Status: **Strong Agent RAG v1 + Reranking + Local MCP (health_check + ask_question + ingest_documents implemented)**. MCP Inspector connects via stdio, ask/ingest flows work, and APM manifest validation is now enforced in CI.
+Next Step (Immediate): Mark local MCP v1 package as `validated`, then prepare first APM package release metadata/changelog.
 
 ## Session Continuity Rule (Permanent)
 
@@ -100,6 +100,12 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
   - `dotnet build rag/src/Rag.McpServer/Rag.McpServer.csproj`
   - Result: pass
 
+### CI Gate Added
+
+- Added APM manifest validation to CI workflow: `.github/workflows/copilot-quality-gates.yml`
+  - New step runs: `./rag/apm/Validate-ApmManifest.ps1 -ManifestPath ./rag/apm/package.manifest.json`
+  - Scope: pull requests and main branch pushes (via existing workflow triggers)
+
 ### Session Update (April 9, 2026 - MCP Ingest Tool Implementation)
 
 - Added `ingest_documents` MCP tool: `rag/src/Rag.McpServer/Tools/IngestTools.cs`
@@ -113,9 +119,9 @@ You must update CHECKPOINT.md after every meaningful change, validation step, or
 
 ### Next APM Increment
 
-1. Add CI task to run `Validate-ApmManifest.ps1` on PR/build.
-2. Wire `Validate-ApmManifest.ps1` into CI on PR/build.
-3. Mark MCP local package `0.1.0` readiness once all three tools are validated in Inspector.
+1. Mark MCP local package `0.1.0` readiness once all three tools are validated in Inspector.
+2. Add first package release notes/changelog entry.
+3. Decide package status transition (`draft` -> `validated`) in `rag/apm/package.manifest.json`.
 
 ---
 
